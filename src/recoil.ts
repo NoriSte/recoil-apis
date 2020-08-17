@@ -2,89 +2,114 @@ import { useState, useEffect, useCallback } from "react";
 
 // APIs
 
-type Atom<T extends any> = { key: string; default: T };
+type AtomOptions<T> = { key: string; default: T };
 
-export const atom = <T extends any>(a: Atom<T>): Atom<T> => {
-  createAtom(a);
-  return a;
+export const atom = <T>(atomOptions: AtomOptions<T>) => {
+  createRecoilValue(atomOptions);
+  return atomOptions;
 };
 
-export const selector = () => {
-  // TODO:
+type SelectorOptions<T> = {
+  key: string;
+
+  get: ({ get }: { get: GetRecoilValue }) => T;
+
+  /*
+  set?: (
+    {get,set}:{
+      get: GetRecoilValue,
+      set: SetRecoilState,
+    },
+    newValue: T,
+  ) => void,
+  */
+};
+export const selector = <T>(s: SelectorOptions<T>) => {
+  createRecoilValue(s);
+  return s;
 };
 
-export const useRecoilState = <T extends any>(
-  atom: Atom<T>
-): [T, (value: T) => void] => {
+export const useRecoilState = <T>(atom: AtomOptions<T>) => {
   const [, forceRefresh] = useState({});
   const atomCallback = useCallback(() => {
     forceRefresh({});
   }, [forceRefresh]);
 
   useEffect(() => {
-    return subscribeToAtom(atom, atomCallback);
+    return subscribeToRecoilValue(atom, atomCallback);
   }, [atom, atomCallback]);
 
-  return [getAtomValue(atom), setAtomValue(atom)];
+  return [getRecoilValue(atom), setAtomValue(atom)];
 };
 
-export const useRecoilValue = <T extends any>(atom: Atom<T>): T => {
+export const useRecoilValue = <T>(atom: AtomOptions<T>) => {
   const [, forceRefresh] = useState({});
   const atomCallback = useCallback(() => {
     forceRefresh({});
   }, [forceRefresh]);
 
   useEffect(() => {
-    return subscribeToAtom(atom, atomCallback);
+    return subscribeToRecoilValue(atom, atomCallback);
   }, [atom, atomCallback]);
 
-  return getAtomValue(atom);
+  return getRecoilValue(atom);
 };
 
 // core
 
-type Atoms = Record<string, CoreAtom>;
-type CoreAtom<T extends any = any> = {
+type RecoilValues = Record<string, RecoilValue>;
+type RecoilValue<T = any> = {
   key: string;
   default: T;
   value: T;
-  subscribers: any[]; // TODO: add types
+  subscribers: RecoilValueSubscriber<T>[];
 };
+type RecoilValueSubscriber<T> = () => void;
 
-const atoms: Atoms = {};
-const createAtom = <T extends any>(atom: Atom<T>) => {
-  const key = atom.key;
-  if (atoms[key]) {
-    throw new Error(`Atom ${atom.key} already exists`);
+const recoilValues: RecoilValues = {};
+const createRecoilValue = <T>(options: AtomOptions<T> | Selector<T>) => {
+  const key = options.key;
+  if (recoilValues[key]) {
+    throw new Error(`Recoil value ${options.key} already exists`);
   }
 
-  atoms[key] = {
+  recoilValues[key] = {
     key,
-    default: atom.default,
-    value: atom.default,
+    default: options.default,
+    value: options.default,
     subscribers: []
   };
 };
 
-const subscribeToAtom = <T extends any>(
-  atom: Atom<T>,
-  callback: any /* TODO */
+const subscribeToRecoilValue = <T>(
+  options: AtomOptions<T>,
+  callback: RecoilValueSubscriber<T>
 ) => {
-  const coreAtom = atoms[atom.key];
-  if (coreAtom.subscribers.indexOf(callback) !== -1) return;
+  const recoilValue = recoilValues[options.key];
+  if (recoilValue.subscribers.indexOf(callback) !== -1) {
+    console.log("Already subscribed to Recoil value");
+    return;
+  }
 
-  coreAtom.subscribers.push(callback);
+  recoilValue.subscribers.push(callback);
   return () => {
-    coreAtom.subscribers.splice(coreAtom.subscribers.indexOf(callback), 1);
+    recoilValue.subscribers.splice(
+      recoilValue.subscribers.indexOf(callback),
+      1
+    );
   };
 };
 
-const setAtomValue = <T extends any>(atom: Atom<T>) => (value: T) => {
-  const coreAtom = atoms[atom.key];
-  coreAtom.value = value;
-  coreAtom.subscribers.forEach((callback) => callback());
-};
+type GetRecoilValue = <T>(options: AtomOptions<T>) => T;
+const getRecoilValue: GetRecoilValue = <T>(options: AtomOptions<T>): T =>
+  recoilValues[options.key].value;
 
-const getAtomValue = <T extends any>(atom: Atom<T>): T => {
-  return atoms[atom.key].value;
+type SetRecoilValue = <T>(options: AtomOptions<T>) => (value: T) => void;
+type SetRecoilState = <T>(options: AtomOptions<T>, value: T) => T;
+const setAtomValue: SetRecoilValue = <T>(options: AtomOptions<T>) => (
+  value: T
+) => {
+  const recoilValue = recoilValues[options.key];
+  recoilValue.value = value;
+  recoilValue.subscribers.forEach((callback) => callback());
 };

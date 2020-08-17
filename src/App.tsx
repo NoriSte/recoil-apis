@@ -69,7 +69,6 @@ function EchoInput() {
 
 function TextInput2() {
   const [text, setText] = useRecoilState(textState2);
-
   useEffect(() => {
     console.log("Render: TextInput2");
   });
