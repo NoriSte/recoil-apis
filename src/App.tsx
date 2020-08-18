@@ -13,6 +13,10 @@ export default function App() {
     <div className="App">
       <h1>TODO: explanation</h1>
       <CharacterCounter />
+      <TextInput2 />
+      <CharacterCount />
+      <CharCountStateForTwo />
+      <Texts />
     </div>
   );
 }
@@ -34,8 +38,6 @@ function CharacterCounter() {
     <div>
       <TextInput />
       <EchoInput />
-      <TextInput2 />
-      {/* <CharacterCount /> */}
     </div>
   );
 }
@@ -86,20 +88,52 @@ function TextInput2() {
 }
 
 // selector
-/*
+
 const charCountState = selector({
   key: "charCountState", // unique ID (with respect to other atoms/selectors)
   get: ({ get }) => {
     const text = get(textState);
-
     return text.length;
+  }
+});
+const charCountStateForTwo = selector({
+  key: "charCountStateForTwo", // unique ID (with respect to other atoms/selectors)
+  get: ({ get }) => {
+    const length = get(charCountState);
+    return length * 2;
+  }
+});
+
+const textsState = selector({
+  key: "textsState", // unique ID (with respect to other atoms/selectors)
+  get: ({ get }) => {
+    return `${get(textState)}-${get(textState2)}`;
   }
 });
 
 function CharacterCount() {
   const count = useRecoilValue(charCountState);
-  
-  useEffect(() => {console.log('Render: CharacterCount')})
-  return <>Character Count: {count}</>;
+
+  useEffect(() => {
+    console.log("Render: CharacterCount");
+  });
+  return <div>Character Count: {count}</div>;
 }
-*/
+
+function CharCountStateForTwo() {
+  const count = useRecoilValue(charCountStateForTwo);
+
+  useEffect(() => {
+    console.log("Render: CharCountStateForTwo");
+  });
+  return <div>Character Count * 2: {count}</div>;
+}
+
+function Texts() {
+  const texts = useRecoilValue(textsState);
+
+  useEffect(() => {
+    console.log("Render: Texts");
+  });
+  return <div>Texts: {texts}</div>;
+}
