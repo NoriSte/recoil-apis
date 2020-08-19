@@ -6,18 +6,20 @@ import {
   SetRecoilValue,
   isAtomOptions,
   GetAtomValue,
-  AtomOptions
+  AtomOptions,
+  SelectorOptions
 } from "./typings";
 
 const recoilValues: Record<string, RecoilValue> = {};
 
 /**
+ * Register a new Recoil Value.
  * @private
  */
 export const createRecoilValue = <T>(options: RecoilValueOptions<T>) => {
   const key = options.key;
   if (recoilValues[key]) {
-    throw new Error(`Recoil value ${options.key} already exists`);
+    throw new Error(`Recoil Value ${options.key} already exists`);
   }
 
   if (isAtomOptions(options)) {
@@ -38,48 +40,62 @@ export const createRecoilValue = <T>(options: RecoilValueOptions<T>) => {
 };
 
 /**
+ * Subscribe to all the updates of a Recoil Value.
  * @private
  */
 export const subscribeToRecoilValue = <T>(
   key: string,
-  callback: RecoilValueSubscriber<T>
+  callback: RecoilValueSubscriber
 ) => {
   const recoilValue = recoilValues[key];
   if (recoilValue.subscribers.indexOf(callback) !== -1) {
-    console.log("Already subscribed to Recoil value");
+    console.log("Already subscribed to Recoil Value");
     return;
   }
 
   recoilValue.subscribers.push(callback);
-  return () => {
+
+  const unsubscribe = () => {
     recoilValue.subscribers.splice(
       recoilValue.subscribers.indexOf(callback),
       1
     );
   };
+
+  return unsubscribe;
 };
 
 /**
+ * Get the current Recoil Value' value
  * @private
  */
 export const getRecoilValue: GetRecoilValue = <T>(
   options: RecoilValueOptions<T>
-): T => {
-  if (isAtomOptions(options)) {
-    return getAtomValue(options);
-  } else {
-    return options.get({ get: getRecoilValue });
-  }
-};
+): T =>
+  isAtomOptions(options) ? getAtomValue(options) : getSelectorValue(options);
 
 /**
+ * Get the current Recoil Atom' value
  * @private
  */
 export const getAtomValue: GetAtomValue = <T>(options: AtomOptions<T>): T => {
-  return recoilValues[options.key].value;
+  const recoilValue = recoilValues[options.key];
+  if (recoilValue.type !== "atom") {
+    throw new Error(`${recoilValue.key} is not an atom`);
+  }
+
+  return recoilValue.value;
 };
 
 /**
+ * Get the current Recoil Selector' value
+ * @private
+ */
+export const getSelectorValue = <T>(options: SelectorOptions<T>): T =>
+  options.get({ get: getRecoilValue });
+
+/**
+ * Set the Recoil Atom and notify the subscribers
  * @private
  */
 export const setAtomValue: SetRecoilValue = <T>(

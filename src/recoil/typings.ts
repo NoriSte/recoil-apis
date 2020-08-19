@@ -1,6 +1,6 @@
-export type AtomOptions<T> = { key: string; default: T };
+export type AtomOptions<T extends any = any> = { key: string; default: T };
 
-export type SelectorOptions<T> = {
+export type SelectorOptions<T extends any = any> = {
   key: string;
 
   get: ({ get }: { get: GetRecoilValue }) => T;
@@ -24,11 +24,13 @@ export const isAtomOptions = (options: any): options is AtomOptions<any> => {
   );
 };
 
-export type RecoilValueOptions<T> = AtomOptions<T> | SelectorOptions<T>;
+export type RecoilValueOptions<T extends any = any> =
+  | AtomOptions<T>
+  | SelectorOptions<T>;
 
-export type RecoilValue<T = any> = {
+export type RecoilValue<T extends any = any> = {
   key: string;
-  subscribers: RecoilValueSubscriber<T>[];
+  subscribers: RecoilValueSubscriber[];
 } & (
   | {
       type: "atom";
@@ -40,11 +42,16 @@ export type RecoilValue<T = any> = {
     }
 );
 
-export type RecoilValueSubscriber<T> = () => void;
+export type RecoilValueSubscriber = () => void;
 
-export type GetRecoilValue = <T>(options: RecoilValueOptions<T>) => T;
-export type GetAtomValue = <T>(options: AtomOptions<T>) => T;
-export type SetRecoilValue = <T>(
+export type GetRecoilValue = <T extends any = any>(
+  options: RecoilValueOptions<T>
+) => T;
+export type GetAtomValue = <T extends any = any>(options: AtomOptions<T>) => T;
+export type SetRecoilValue = <T extends any = any>(
   options: RecoilValueOptions<T>
 ) => (value: T) => void;
-export type SetRecoilState = <T>(options: RecoilValueOptions<T>, value: T) => T;
+export type SetRecoilState = <T extends any = any>(
+  options: RecoilValueOptions<T>,
+  value: T
+) => T;
