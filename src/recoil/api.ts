@@ -9,7 +9,8 @@ import {
   setAtomValue,
   getRecoilValue,
   createRecoilValue,
-  subscribeToRecoilValue
+  subscribeToRecoilValue,
+  setSelectorValue
 } from "./core";
 
 /**
@@ -30,9 +31,23 @@ export const selector = <T extends any = any>(
   return selectorOptions;
 };
 
-export const useRecoilState = <T>(recoilValue: AtomOptions<T>) => {
-  // TODO: add seelctor' set
-  return [useRecoilValue(recoilValue), setAtomValue(recoilValue)];
+const noop = () => {};
+export const useRecoilState = <T>(recoilValue: RecoilValueOptions<T>) => {
+  const useRecoilValueResult = useRecoilValue(recoilValue);
+  if (isAtomOptions(recoilValue)) {
+    return [useRecoilValueResult, setAtomValue(recoilValue)];
+  } else {
+    return [
+      useRecoilValueResult,
+      (newValue: T) =>
+        recoilValue.set
+          ? recoilValue.set(
+              { get: getRecoilValue, set: setSelectorValue },
+              newValue
+            )
+          : noop
+    ];
+  }
 };
 
 /**

@@ -4,7 +4,7 @@ import { ChangeEvent } from "react";
 import * as React from "react";
 import "./styles.css";
 
-import { useEffect } from "react";
+import { useEffect, useCallback, useState } from "react";
 
 import { atom, selector, useRecoilState, useRecoilValue } from "./recoil";
 
@@ -16,7 +16,9 @@ export default function App() {
       <TextInput2 />
       <CharacterCount />
       <CharCountStateForTwo />
+      <br />
       <Texts />
+      <SetTexts />
     </div>
   );
 }
@@ -104,10 +106,24 @@ const charCountStateForTwo = selector({
   }
 });
 
-const textsState = selector({
+const textsState = selector<string>({
   key: "textsState", // unique ID (with respect to other atoms/selectors)
   get: ({ get }) => {
     return `${get(textState)}-${get(textState2)}`;
+  },
+  set: ({ get, set }, nextValue) => {
+    if (!nextValue.includes("-")) return;
+    const strings = nextValue.split("-");
+    if (strings.length !== 2) return;
+    const [nextValue1, nextValue2] = strings;
+    const prevValue1 = get(textState);
+    const prevValue2 = get(textState2);
+    if (nextValue1 !== prevValue1) {
+      set(textState, nextValue1);
+    }
+    if (nextValue2 !== prevValue2) {
+      set(textState2, nextValue2);
+    }
   }
 });
 
@@ -136,4 +152,25 @@ function Texts() {
     console.log("Render: Texts");
   });
   return <div>Texts: {texts}</div>;
+}
+
+function SetTexts() {
+  const [, setTexts] = useRecoilState(textsState);
+  const [inputValue, setInputValue] = useState("");
+  useEffect(() => {
+    console.log("Render: SetTexts");
+  });
+  const onChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setInputValue(event.target.value);
+  };
+  const handleOnClick = useCallback(() => {
+    setTexts(inputValue);
+  }, [setTexts, inputValue]);
+
+  return (
+    <div>
+      <input type="text" value={inputValue} onChange={onChange} />
+      <button onClick={handleOnClick}>Set texts</button>
+    </div>
+  );
 }

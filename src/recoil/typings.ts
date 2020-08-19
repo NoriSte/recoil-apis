@@ -5,15 +5,16 @@ export type SelectorOptions<T extends any = any> = {
 
   get: ({ get }: { get: GetRecoilValue }) => T;
 
-  /*
   set?: (
-    {get,set}:{
-      get: GetRecoilValue,
-      set: SetRecoilState,
+    {
+      get,
+      set
+    }: {
+      get: GetRecoilValue;
+      set: SetRecoilState;
     },
-    newValue: T,
-  ) => void,
-  */
+    newValue: T
+  ) => void;
 };
 
 export const isAtomOptions = (options: any): options is AtomOptions<any> => {
@@ -54,4 +55,4 @@ export type SetRecoilValue = <T extends any = any>(
 export type SetRecoilState = <T extends any = any>(
   options: RecoilValueOptions<T>,
   value: T
-) => T;
+) => void;

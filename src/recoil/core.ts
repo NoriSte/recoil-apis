@@ -48,18 +48,16 @@ export const subscribeToRecoilValue = <T>(
   callback: RecoilValueSubscriber
 ) => {
   const recoilValue = recoilValues[key];
-  if (recoilValue.subscribers.indexOf(callback) !== -1) {
+  const { subscribers } = recoilValue;
+  if (subscribers.indexOf(callback) !== -1) {
     console.log("Already subscribed to Recoil Value");
     return;
   }
 
-  recoilValue.subscribers.push(callback);
+  subscribers.push(callback);
 
   const unsubscribe = () => {
-    recoilValue.subscribers.splice(
-      recoilValue.subscribers.indexOf(callback),
-      1
-    );
+    subscribers.splice(subscribers.indexOf(callback), 1);
   };
 
   return unsubscribe;
@@ -103,11 +101,25 @@ export const setAtomValue: SetRecoilValue = <T>(
 ) => (value: T) => {
   const recoilValue = recoilValues[options.key];
 
-  if (recoilValue.type === "atom") {
-    recoilValue.value = value;
-    recoilValue.subscribers.forEach((callback) => callback());
+  if (recoilValue.type !== "atom") {
+    throw new Error(`${recoilValue.key} is not an atom`);
+  }
+
+  recoilValue.value = value;
+  recoilValue.subscribers.forEach((callback) => callback());
+};
+
+/**
+ * Provide a Selector setter
+ * @private
+ */
+export const setSelectorValue = <T>(
+  options: RecoilValueOptions<T>,
+  value: T
+) => {
+  if (isAtomOptions(options)) {
+    setAtomValue<T>(options)(value);
   } else {
-    // TODO:
-    console.log("Selector set not implemented yet");
+    setSelectorValue(options, value);
   }
 };
