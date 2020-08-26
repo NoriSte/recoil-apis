@@ -1,13 +1,13 @@
 import {
   RecoilValue,
-  RecoilValueOptions,
-  RecoilValueSubscriber,
-  GetRecoilValue,
-  SetRecoilValue,
-  isAtomOptions,
-  GetAtomValue,
   AtomOptions,
-  SelectorOptions
+  GetAtomValue,
+  GetRecoilValue,
+  isAtomOptions,
+  SetRecoilValue,
+  SelectorOptions,
+  RecoilValueOptions,
+  RecoilValueSubscriber
 } from "./typings";
 
 const recoilValues: Record<string, RecoilValue> = {};
@@ -110,16 +110,13 @@ export const setAtomValue: SetRecoilValue = <T>(
 };
 
 /**
- * Provide a Selector setter
+ * Provide a Recoil Value setter
  * @private
  */
-export const setSelectorValue = <T>(
-  options: RecoilValueOptions<T>,
-  value: T
-) => {
+export const setRecoilValue = <T>(options: RecoilValueOptions<T>, value: T) => {
   if (isAtomOptions(options)) {
     setAtomValue<T>(options)(value);
   } else {
-    setSelectorValue(options, value);
+    setRecoilValue(options, value);
   }
 };

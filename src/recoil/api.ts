@@ -10,7 +10,7 @@ import {
   getRecoilValue,
   createRecoilValue,
   subscribeToRecoilValue,
-  setSelectorValue
+  setRecoilValue
 } from "./core";
 
 /**
@@ -31,27 +31,8 @@ export const selector = <T extends any = any>(
   return selectorOptions;
 };
 
-const noop = () => {};
-export const useRecoilState = <T>(recoilValue: RecoilValueOptions<T>) => {
-  const useRecoilValueResult = useRecoilValue(recoilValue);
-  if (isAtomOptions(recoilValue)) {
-    return [useRecoilValueResult, setAtomValue(recoilValue)];
-  } else {
-    return [
-      useRecoilValueResult,
-      (newValue: T) =>
-        recoilValue.set
-          ? recoilValue.set(
-              { get: getRecoilValue, set: setSelectorValue },
-              newValue
-            )
-          : noop
-    ];
-  }
-};
-
 /**
- * Subscribe to all the Recoil Values updaters. Returns the current value and a setter
+ * Subscribe to all the Recoil Values updaters and Returns the current value.
  */
 export const useRecoilValue = <T>(options: RecoilValueOptions<T>) => {
   const [, forceRender] = useReducer((s) => s + 1, 0);
@@ -64,14 +45,29 @@ export const useRecoilValue = <T>(options: RecoilValueOptions<T>) => {
   return getRecoilValue(options);
 };
 
-type GenericFunction = () => void;
+/**
+ * Subscribe to all the Recoil Values updaters and returns both the current value and a setter.
+ */
+export const useRecoilState = <T>(recoilValue: RecoilValueOptions<T>) => {
+  const useRecoilValueResult = useRecoilValue(recoilValue);
+  if (isAtomOptions(recoilValue)) {
+    const setter = setAtomValue(recoilValue);
+    return [useRecoilValueResult, setter] as const;
+  } else {
+    const setter = (newValue: T) => {
+      recoilValue.set?.({ get: getRecoilValue, set: setRecoilValue }, newValue);
+    };
+    return [useRecoilValueResult, setter] as const;
+  }
+};
 
+type Callback = () => void;
 /**
  * Subscribe to all the uopdates from the involved Recoil Values
  */
 export const useSubscribeToRecoilValues = <T>(
   options: RecoilValueOptions<T>,
-  callback: GenericFunction
+  callback: Callback
 ) => {
   useEffect(() => {
     if (isAtomOptions(options)) {
@@ -80,7 +76,7 @@ export const useSubscribeToRecoilValues = <T>(
       const dependencies: string[] = [];
 
       options.get({ get: createDependenciesSpy(dependencies) });
-      const unsubscribes: GenericFunction[] = [];
+      const unsubscribes: Callback[] = [];
       dependencies.forEach((key) => {
         const unsubscribe = subscribeToRecoilValue(key, callback);
         if (unsubscribe) unsubscribes.push(unsubscribe);

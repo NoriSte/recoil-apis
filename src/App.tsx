@@ -12,13 +12,17 @@ export default function App() {
   return (
     <div className="App">
       <h1>TODO: explanation</h1>
-      <CharacterCounter />
-      <TextInput2 />
-      <CharacterCount />
-      <CharCountStateForTwo />
+      <TextInput1 />
+      <EchoInput />
+      <br />
+      <TextInput2AndEcho />
+      <br />
+      <TextState1CharacterCount />
+      <TextState1CharCountStateForTwo />
       <br />
       <Texts />
-      <SetTexts />
+      <br />
+      <SetBothTexts />
     </div>
   );
 }
@@ -26,26 +30,17 @@ export default function App() {
 // atom
 
 // all the code comes from Recoil' Getting Started giude https://recoiljs.org/docs/introduction/getting-started
-const textState = atom<string>({
-  key: "textState", // unique ID (with respect to other atoms/selectors)
-  default: "" // default value (aka initial value)
+const textState1 = atom<string>({
+  key: "textState1",
+  default: ""
 });
 const textState2 = atom<string>({
-  key: "textState2", // unique ID (with respect to other atoms/selectors)
-  default: "" // default value (aka initial value)
+  key: "textState2",
+  default: ""
 });
 
-function CharacterCounter() {
-  return (
-    <div>
-      <TextInput />
-      <EchoInput />
-    </div>
-  );
-}
-
-function TextInput() {
-  const [text, setText] = useRecoilState(textState);
+function TextInput1() {
+  const [text, setText] = useRecoilState(textState1);
 
   useEffect(() => {
     console.log("Render: TextInput");
@@ -55,23 +50,24 @@ function TextInput() {
   };
 
   return (
-    <div>
-      <input type="text" value={text} onChange={onChange} />
-    </div>
+    <input
+      type="text"
+      value={text}
+      onChange={onChange}
+      placeholder="textState1"
+    />
   );
 }
 
 function EchoInput() {
-  const text = useRecoilValue(textState);
-
+  const text = useRecoilValue(textState1);
   useEffect(() => {
     console.log("Render: EchoInput");
   });
-
-  return <div>Echo: {text}</div>;
+  return <div>Echoing textState1: {text}</div>;
 }
 
-function TextInput2() {
+function TextInput2AndEcho() {
   const [text, setText] = useRecoilState(textState2);
   useEffect(() => {
     console.log("Render: TextInput2");
@@ -79,12 +75,16 @@ function TextInput2() {
   const onChange = (event: ChangeEvent<HTMLInputElement>) => {
     setText(event.target.value);
   };
-
   return (
     <div>
-      <input type="text" value={text} onChange={onChange} />
+      <input
+        type="text"
+        value={text}
+        onChange={onChange}
+        placeholder="textState2"
+      />
       <br />
-      Echo: {text}
+      Echoing textState2: {text}
     </div>
   );
 }
@@ -92,34 +92,35 @@ function TextInput2() {
 // selector
 
 const charCountState = selector({
-  key: "charCountState", // unique ID (with respect to other atoms/selectors)
+  key: "charCountState",
   get: ({ get }) => {
-    const text = get(textState);
+    const text = get(textState1);
     return text.length;
   }
 });
 const charCountStateForTwo = selector({
-  key: "charCountStateForTwo", // unique ID (with respect to other atoms/selectors)
+  key: "charCountStateForTwo",
   get: ({ get }) => {
     const length = get(charCountState);
     return length * 2;
   }
 });
 
-const textsState = selector<string>({
-  key: "textsState", // unique ID (with respect to other atoms/selectors)
+const bothTextsState = selector<string>({
+  key: "bothTextsState",
   get: ({ get }) => {
-    return `${get(textState)}-${get(textState2)}`;
+    return `${get(textState1)}-${get(textState2)}`;
   },
   set: ({ get, set }, nextValue) => {
     if (!nextValue.includes("-")) return;
     const strings = nextValue.split("-");
     if (strings.length !== 2) return;
     const [nextValue1, nextValue2] = strings;
-    const prevValue1 = get(textState);
+    const prevValue1 = get(textState1);
     const prevValue2 = get(textState2);
+    // simulating edge cases
     if (nextValue1 !== prevValue1) {
-      set(textState, nextValue1);
+      set(textState1, nextValue1);
     }
     if (nextValue2 !== prevValue2) {
       set(textState2, nextValue2);
@@ -127,35 +128,45 @@ const textsState = selector<string>({
   }
 });
 
-function CharacterCount() {
+function TextState1CharacterCount() {
   const count = useRecoilValue(charCountState);
-
   useEffect(() => {
-    console.log("Render: CharacterCount");
+    console.log("Render: TextState1CharacterCount");
   });
-  return <div>Character Count: {count}</div>;
+  return (
+    <div>
+      textState1 contains <strong>{count}</strong> characters
+    </div>
+  );
 }
 
-function CharCountStateForTwo() {
+function TextState1CharCountStateForTwo() {
   const count = useRecoilValue(charCountStateForTwo);
-
   useEffect(() => {
-    console.log("Render: CharCountStateForTwo");
+    console.log("Render: TextState1CharCountStateForTwo");
   });
-  return <div>Character Count * 2: {count}</div>;
+  return (
+    <div>
+      textState1 contains <strong>{count}</strong> characters (multiplied for
+      two)
+    </div>
+  );
 }
 
 function Texts() {
-  const texts = useRecoilValue(textsState);
-
+  const texts = useRecoilValue(bothTextsState);
   useEffect(() => {
     console.log("Render: Texts");
   });
-  return <div>Texts: {texts}</div>;
+  return (
+    <div>
+      Both texts, splitted by a dash: <strong>{texts}</strong>
+    </div>
+  );
 }
 
-function SetTexts() {
-  const [, setTexts] = useRecoilState(textsState);
+function SetBothTexts() {
+  const [, setTexts] = useRecoilState(bothTextsState);
   const [inputValue, setInputValue] = useState("");
   useEffect(() => {
     console.log("Render: SetTexts");
@@ -169,8 +180,10 @@ function SetTexts() {
 
   return (
     <div>
+      Set both the texts at once, split them with a dash
+      <br />
       <input type="text" value={inputValue} onChange={onChange} />
-      <button onClick={handleOnClick}>Set texts</button>
+      <button onClick={handleOnClick}>Set both texts</button>
     </div>
   );
 }
