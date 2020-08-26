@@ -105,6 +105,10 @@ export const setAtomValue: SetRecoilValue = <T>(
     throw new Error(`${recoilValue.key} is not an atom`);
   }
 
+  if (value === recoilValue.value) {
+    return;
+  }
+
   recoilValue.value = value;
   recoilValue.subscribers.forEach((callback) => callback());
 };

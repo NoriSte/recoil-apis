@@ -118,13 +118,12 @@ const bothTextsState = selector<string>({
     const [nextValue1, nextValue2] = strings;
     const prevValue1 = get(textState1);
     const prevValue2 = get(textState2);
-    // simulating edge cases
-    if (nextValue1 !== prevValue1) {
-      set(textState1, nextValue1);
-    }
-    if (nextValue2 !== prevValue2) {
-      set(textState2, nextValue2);
-    }
+
+    // useless, just to use the `get` function
+    if (`${prevValue1}-${prevValue2}` === `${nextValue1}-${nextValue2}`) return;
+
+    set(textState1, nextValue1);
+    set(textState2, nextValue2);
   }
 });
 

@@ -65,7 +65,7 @@ type Callback = () => void;
 /**
  * Subscribe to all the uopdates from the involved Recoil Values
  */
-export const useSubscribeToRecoilValues = <T>(
+const useSubscribeToRecoilValues = <T>(
   options: RecoilValueOptions<T>,
   callback: Callback
 ) => {
