@@ -132,11 +132,7 @@ function TextState1CharacterCount() {
   useEffect(() => {
     console.log("Render: TextState1CharacterCount");
   });
-  return (
-    <div>
-      textState1 contains <strong>{count}</strong> characters
-    </div>
-  );
+  return <div>textState1 contains {count} characters</div>;
 }
 
 function TextState1CharCountStateForTwo() {
@@ -144,12 +140,7 @@ function TextState1CharCountStateForTwo() {
   useEffect(() => {
     console.log("Render: TextState1CharCountStateForTwo");
   });
-  return (
-    <div>
-      textState1 contains <strong>{count}</strong> characters (multiplied for
-      two)
-    </div>
-  );
+  return <div>textState1 contains {count} characters (multiplied for two)</div>;
 }
 
 function Texts() {
@@ -157,11 +148,7 @@ function Texts() {
   useEffect(() => {
     console.log("Render: Texts");
   });
-  return (
-    <div>
-      Both texts, splitted by a dash: <strong>{texts}</strong>
-    </div>
-  );
+  return <div>Both texts, splitted by a dash: {texts}</div>;
 }
 
 function SetBothTexts() {
@@ -181,7 +168,12 @@ function SetBothTexts() {
     <div>
       Set both the texts at once, split them with a dash
       <br />
-      <input type="text" value={inputValue} onChange={onChange} />
+      <input
+        type="text"
+        value={inputValue}
+        onChange={onChange}
+        placeholder="setTexts"
+      />
       <button onClick={handleOnClick}>Set both texts</button>
     </div>
   );
