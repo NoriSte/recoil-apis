@@ -38,6 +38,8 @@ Article topics:
     - a selector that depends on some atoms
     - a selector that depends on a selector
     - a selector that sets both
+  - writing the tests...
+    - I need RecoilRoot
 - differences with recoil
   - same value to an atom doesn't make the components re-render
 - note

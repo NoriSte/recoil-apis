@@ -2,6 +2,12 @@ import * as React from "react";
 import { render } from "react-dom";
 
 import App from "./App";
+import { RecoilRoot } from "./recoil/RecoilRoot";
 
 const rootElement = document.getElementById("root");
-render(<App />, rootElement);
+render(
+  <RecoilRoot>
+    <App />
+  </RecoilRoot>,
+  rootElement
+);

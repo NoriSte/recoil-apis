@@ -8,7 +8,7 @@ export type SelectorOptions<T extends any = any> = {
       get,
       set
     }: {
-      get: GetRecoilValue;
+      get: GetRecoilValueForSelector;
       set: SetRecoilState;
     },
     newValue: T
@@ -44,13 +44,22 @@ export type RecoilValue<T extends any = any> = {
 export type RecoilValueSubscriber = () => void;
 
 export type GetRecoilValue = <T extends any = any>(
+  recoilId: string,
   options: RecoilValueOptions<T>
 ) => T;
-export type GetAtomValue = <T extends any = any>(options: AtomOptions<T>) => T;
+export type GetRecoilValueForSelector = <T extends any = any>(
+  options: RecoilValueOptions<T>
+) => T;
+export type GetAtomValue = <T extends any = any>(
+  recoilId: string,
+  options: AtomOptions<T>
+) => T;
 export type SetRecoilValue = <T extends any = any>(
+  recoilId: string,
   options: RecoilValueOptions<T>
 ) => (value: T) => void;
 export type SetRecoilState = <T extends any = any>(
+  recoilId: string,
   options: RecoilValueOptions<T>,
   value: T
 ) => void;

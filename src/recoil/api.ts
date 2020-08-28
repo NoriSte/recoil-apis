@@ -4,20 +4,20 @@ import {
   RecoilValueOptions,
   isAtomOptions
 } from "./typings";
-import { useReducer, useEffect, useCallback } from "react";
+import { useReducer, useEffect, useCallback, useContext } from "react";
+import { RecoilContext } from "./RecoilRoot";
 import {
   setAtomValue,
   getRecoilValue,
-  createRecoilValue,
-  subscribeToRecoilValue,
-  setRecoilValue
+  setRecoilValue,
+  getRecoilValueHoc,
+  subscribeToRecoilValue
 } from "./core";
 
 /**
  * Register a new atom.
  */
 export const atom = <T extends any = any>(atomOptions: AtomOptions<T>) => {
-  createRecoilValue(atomOptions);
   return atomOptions;
 };
 
@@ -27,7 +27,6 @@ export const atom = <T extends any = any>(atomOptions: AtomOptions<T>) => {
 export const selector = <T extends any = any>(
   selectorOptions: SelectorOptions<T>
 ) => {
-  createRecoilValue(selectorOptions);
   return selectorOptions;
 };
 
@@ -35,27 +34,31 @@ export const selector = <T extends any = any>(
  * Subscribe to all the Recoil Values updaters and Returns the current value.
  */
 export const useRecoilValue = <T>(options: RecoilValueOptions<T>) => {
+  const recoilId = useRecoilId();
   const [, forceRender] = useReducer((s) => s + 1, 0);
   const subscriptionCallback = useCallback(() => {
     forceRender();
   }, [forceRender]);
 
   useSubscribeToRecoilValues(options, subscriptionCallback);
-
-  return getRecoilValue(options);
+  return getRecoilValue(recoilId, options);
 };
 
 /**
  * Subscribe to all the Recoil Values updaters and returns both the current value and a setter.
  */
 export const useRecoilState = <T>(recoilValue: RecoilValueOptions<T>) => {
+  const recoilId = useRecoilId();
   const useRecoilValueResult = useRecoilValue(recoilValue);
   if (isAtomOptions(recoilValue)) {
-    const setter = setAtomValue(recoilValue);
+    const setter = setAtomValue(recoilId, recoilValue);
     return [useRecoilValueResult, setter] as const;
   } else {
     const setter = (newValue: T) => {
-      recoilValue.set?.({ get: getRecoilValue, set: setRecoilValue }, newValue);
+      recoilValue.set?.(
+        { get: getRecoilValueHoc(recoilId), set: setRecoilValue },
+        newValue
+      );
     };
     return [useRecoilValueResult, setter] as const;
   }
@@ -69,22 +72,23 @@ const useSubscribeToRecoilValues = <T>(
   options: RecoilValueOptions<T>,
   callback: Callback
 ) => {
+  const recoilId = useRecoilId();
   useEffect(() => {
     if (isAtomOptions(options)) {
-      return subscribeToRecoilValue(options.key, callback);
+      return subscribeToRecoilValue(recoilId, options.key, callback);
     } else {
       const dependencies: string[] = [];
 
       options.get({ get: createDependenciesSpy(dependencies) });
       const unsubscribes: Callback[] = [];
       dependencies.forEach((key) => {
-        const unsubscribe = subscribeToRecoilValue(key, callback);
+        const unsubscribe = subscribeToRecoilValue(recoilId, key, callback);
         if (unsubscribe) unsubscribes.push(unsubscribe);
       });
 
       return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
     }
-  }, [options, callback]);
+  }, [recoilId, options, callback]);
 };
 
 /**
@@ -92,7 +96,7 @@ const useSubscribeToRecoilValues = <T>(
  */
 const createDependenciesSpy = (dependencies: string[]) => {
   const dependenciesSpy: typeof getRecoilValue = (...params) => {
-    const recoilValueOptions = params[0];
+    const recoilValueOptions = params[1];
     dependencies.push(recoilValueOptions.key);
 
     if (isAtomOptions(recoilValueOptions)) {
@@ -103,4 +107,13 @@ const createDependenciesSpy = (dependencies: string[]) => {
   };
 
   return dependenciesSpy;
+};
+
+const useRecoilId = () => {
+  const recoilId = useContext(RecoilContext);
+  if (!recoilId) {
+    throw new Error("Wrap your app with <RecoilRoot>");
+  }
+
+  return recoilId;
 };

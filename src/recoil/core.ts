@@ -10,16 +10,37 @@ import {
   RecoilValueSubscriber
 } from "./typings";
 
-const recoilValues: Record<string, RecoilValue> = {};
+/**
+ * Different RecoilRoots have different stores
+ */
+const recoilStores: Record<string, Record<string, RecoilValue>> = {};
+const getRecoilValues = (recoilId: string) => {
+  recoilStores[recoilId] = recoilStores[recoilId] || {};
+  return recoilStores[recoilId];
+};
+
+/**
+ * Creates a new, unique, Recoil id
+ */
+let lastRecoilId = 0;
+export const generateRecoilId = () => {
+  return (lastRecoilId++).toString();
+};
 
 /**
  * Register a new Recoil Value.
  * @private
  */
-export const createRecoilValue = <T>(options: RecoilValueOptions<T>) => {
+export const registerRecoilValue = <T>(
+  recoilId: string,
+  options: RecoilValueOptions<T>
+) => {
   const key = options.key;
+  console.log(recoilId);
+  const recoilValues = getRecoilValues(recoilId);
+
   if (recoilValues[key]) {
-    throw new Error(`Recoil Value ${options.key} already exists`);
+    return;
   }
 
   if (isAtomOptions(options)) {
@@ -44,9 +65,11 @@ export const createRecoilValue = <T>(options: RecoilValueOptions<T>) => {
  * @private
  */
 export const subscribeToRecoilValue = <T>(
+  recoilId: string,
   key: string,
   callback: RecoilValueSubscriber
 ) => {
+  const recoilValues = getRecoilValues(recoilId);
   const recoilValue = recoilValues[key];
   const { subscribers } = recoilValue;
   if (subscribers.indexOf(callback) !== -1) {
@@ -68,15 +91,33 @@ export const subscribeToRecoilValue = <T>(
  * @private
  */
 export const getRecoilValue: GetRecoilValue = <T>(
+  recoilId: string,
   options: RecoilValueOptions<T>
-): T =>
-  isAtomOptions(options) ? getAtomValue(options) : getSelectorValue(options);
+): T => {
+  return isAtomOptions(options)
+    ? getAtomValueHoc(recoilId)(options)
+    : getSelectorValue(options);
+};
+
+/**
+ * Get the current Recoil Value' value
+ * @private
+ */
+export const getRecoilValueHoc = <T>(recoilId: string) => (
+  options: RecoilValueOptions<T>
+): T => {
+  return isAtomOptions(options) ? getAtomValueHoc(recoilId) : getSelectorValue;
+};
 
 /**
  * Get the current Recoil Atom' value
  * @private
  */
-export const getAtomValue: GetAtomValue = <T>(options: AtomOptions<T>): T => {
+export const getAtomValueHoc = <T>(recoilId: string) => (
+  options: AtomOptions<T>
+): T => {
+  registerRecoilValue(recoilId, options);
+  const recoilValues = getRecoilValues(recoilId);
   const recoilValue = recoilValues[options.key];
   if (recoilValue.type !== "atom") {
     throw new Error(`${recoilValue.key} is not an atom`);
@@ -97,8 +138,10 @@ export const getSelectorValue = <T>(options: SelectorOptions<T>): T =>
  * @private
  */
 export const setAtomValue: SetRecoilValue = <T>(
+  recoilId: string,
   options: RecoilValueOptions<T>
 ) => (value: T) => {
+  const recoilValues = getRecoilValues(recoilId);
   const recoilValue = recoilValues[options.key];
 
   if (recoilValue.type !== "atom") {
@@ -117,10 +160,14 @@ export const setAtomValue: SetRecoilValue = <T>(
  * Provide a Recoil Value setter
  * @private
  */
-export const setRecoilValue = <T>(options: RecoilValueOptions<T>, value: T) => {
+export const setRecoilValue = <T>(
+  recoilId: string,
+  options: RecoilValueOptions<T>,
+  value: T
+) => {
   if (isAtomOptions(options)) {
-    setAtomValue<T>(options)(value);
+    setAtomValue<T>(recoilId, options)(value);
   } else {
-    setRecoilValue(options, value);
+    setRecoilValue(recoilId, options, value);
   }
 };
