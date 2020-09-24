@@ -1,7 +1,6 @@
 import {
   RecoilValue,
   AtomOptions,
-  GetAtomValue,
   GetRecoilValue,
   isAtomOptions,
   SetRecoilValue,
@@ -95,25 +94,45 @@ export const getRecoilValue: GetRecoilValue = <T>(
   options: RecoilValueOptions<T>
 ): T => {
   return isAtomOptions(options)
-    ? getAtomValueHoc(recoilId)(options)
+    ? getAtomValue(recoilId, options)
     : getSelectorValue(options);
-};
-
-/**
- * Get the current Recoil Value' value
- * @private
- */
-export const getRecoilValueHoc = <T>(recoilId: string) => (
-  options: RecoilValueOptions<T>
-): T => {
-  return isAtomOptions(options) ? getAtomValueHoc(recoilId) : getSelectorValue;
 };
 
 /**
  * Get the current Recoil Atom' value
  * @private
  */
-export const getAtomValueHoc = <T>(recoilId: string) => (
+export const getAtomValue = <T>(
+  recoilId: string,
+  options: AtomOptions<T>
+): T => {
+  registerRecoilValue(recoilId, options);
+  const recoilValues = getRecoilValues(recoilId);
+  const recoilValue = recoilValues[options.key];
+  if (recoilValue.type !== "atom") {
+    throw new Error(`${recoilValue.key} is not an atom`);
+  }
+
+  return recoilValue.value;
+};
+
+/**
+ * Creates a function that gets the current Recoil Value' value
+ * @private
+ */
+export const getPreflightGetRecoilValue = <T>(recoilId: string) => (
+  options: RecoilValueOptions<T>
+): T => {
+  return isAtomOptions(options)
+    ? getPreflightAtomValue(recoilId)
+    : getSelectorValue;
+};
+
+/**
+ * Creates a function that gets the current Recoil Atom' value
+ * @private
+ */
+export const getPreflightAtomValue = <T>(recoilId: string) => (
   options: AtomOptions<T>
 ): T => {
   registerRecoilValue(recoilId, options);
@@ -162,6 +181,21 @@ export const setAtomValue: SetRecoilValue = <T>(
  */
 export const setRecoilValue = <T>(
   recoilId: string,
+  options: RecoilValueOptions<T>,
+  value: T
+) => {
+  if (isAtomOptions(options)) {
+    setAtomValue<T>(recoilId, options)(value);
+  } else {
+    setRecoilValue(recoilId, options, value);
+  }
+};
+
+/**
+ * Creates a function that sets a Recoil' value
+ * @private
+ */
+export const getPreflightSetRecoilValue = <T>(recoilId: string) => (
   options: RecoilValueOptions<T>,
   value: T
 ) => {

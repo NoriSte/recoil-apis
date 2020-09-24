@@ -9,13 +9,15 @@ import { RecoilContext } from "./RecoilRoot";
 import {
   setAtomValue,
   getRecoilValue,
-  setRecoilValue,
-  getRecoilValueHoc,
-  subscribeToRecoilValue
+  getPreflightGetRecoilValue,
+  getPreflightSetRecoilValue,
+  subscribeToRecoilValue,
+  registerRecoilValue
 } from "./core";
 
 /**
  * Register a new atom.
+ * Please note: it does nothing for the sake of this exercise
  */
 export const atom = <T extends any = any>(atomOptions: AtomOptions<T>) => {
   return atomOptions;
@@ -23,6 +25,7 @@ export const atom = <T extends any = any>(atomOptions: AtomOptions<T>) => {
 
 /**
  * Register a new selector.
+ * Please note: it does nothing for the sake of this exercise
  */
 export const selector = <T extends any = any>(
   selectorOptions: SelectorOptions<T>
@@ -40,6 +43,8 @@ export const useRecoilValue = <T>(options: RecoilValueOptions<T>) => {
     forceRender();
   }, [forceRender]);
 
+  registerRecoilValue(recoilId, options);
+
   useSubscribeToRecoilValues(options, subscriptionCallback);
   return getRecoilValue(recoilId, options);
 };
@@ -47,16 +52,22 @@ export const useRecoilValue = <T>(options: RecoilValueOptions<T>) => {
 /**
  * Subscribe to all the Recoil Values updaters and returns both the current value and a setter.
  */
-export const useRecoilState = <T>(recoilValue: RecoilValueOptions<T>) => {
+export const useRecoilState = <T>(options: RecoilValueOptions<T>) => {
   const recoilId = useRecoilId();
-  const useRecoilValueResult = useRecoilValue(recoilValue);
-  if (isAtomOptions(recoilValue)) {
-    const setter = setAtomValue(recoilId, recoilValue);
+  const useRecoilValueResult = useRecoilValue(options);
+
+  registerRecoilValue(recoilId, options);
+
+  if (isAtomOptions(options)) {
+    const setter = setAtomValue(recoilId, options);
     return [useRecoilValueResult, setter] as const;
   } else {
     const setter = (newValue: T) => {
-      recoilValue.set?.(
-        { get: getRecoilValueHoc(recoilId), set: setRecoilValue },
+      options.set?.(
+        {
+          get: getPreflightGetRecoilValue(recoilId),
+          set: getPreflightSetRecoilValue(recoilId)
+        },
         newValue
       );
     };
