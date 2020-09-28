@@ -3,16 +3,25 @@ import "@testing-library/jest-dom";
 import { render, screen, cleanup } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
+import { RecoilRoot } from "./recoil/RecoilRoot";
 
 describe("Smoke tests", () => {
   test("The app should work", () => {
-    render(<App />);
+    render(
+      <RecoilRoot>
+        <App />
+      </RecoilRoot>
+    );
   });
 
   test("The components should render in the expected order", () => {
     const consoleMock = jest.fn();
     console.log = consoleMock;
-    render(<App />);
+    render(
+      <RecoilRoot>
+        <App />
+      </RecoilRoot>
+    );
     expect(extractLog(consoleMock)).toEqual([
       "Render: TextInput",
       "Render: EchoInput",
@@ -27,7 +36,11 @@ describe("Smoke tests", () => {
 
 describe("Recoil API", () => {
   test("Updating the textState1 atom should force the subscribed components to re-render", async () => {
-    render(<App />);
+    render(
+      <RecoilRoot>
+        <App />
+      </RecoilRoot>
+    );
     const consoleMock = jest.fn();
     console.log = consoleMock;
 
@@ -79,7 +92,11 @@ describe("Recoil API", () => {
   });
 
   test("Updating the textState2 atom should force the subscribed components to re-render", async () => {
-    render(<App />);
+    render(
+      <RecoilRoot>
+        <App />
+      </RecoilRoot>
+    );
     const consoleMock = jest.fn();
     console.log = consoleMock;
 
@@ -109,8 +126,12 @@ describe("Recoil API", () => {
     ).toBeInTheDocument();
   });
 
-  test.skip("BACKUPUpdating the atom should force the subscribed components to re-render", async () => {
-    render(<App />);
+  test("Updating the atom should force the subscribed components to re-render", async () => {
+    render(
+      <RecoilRoot>
+        <App />
+      </RecoilRoot>
+    );
 
     const consoleMock = jest.fn();
 
