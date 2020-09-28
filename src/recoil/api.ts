@@ -2,7 +2,8 @@ import {
   AtomOptions,
   SelectorOptions,
   RecoilValueOptions,
-  isAtomOptions
+  isAtomOptions,
+  PreflightGetRecoilValue
 } from "./typings";
 import { useReducer, useEffect, useCallback, useContext } from "react";
 import { RecoilContext } from "./RecoilRoot";
@@ -44,7 +45,6 @@ export const useRecoilValue = <T>(options: RecoilValueOptions<T>) => {
   }, [forceRender]);
 
   registerRecoilValue(recoilId, options);
-
   useSubscribeToRecoilValues(options, subscriptionCallback);
   return getRecoilValue(recoilId, options);
 };
@@ -90,7 +90,7 @@ const useSubscribeToRecoilValues = <T>(
     } else {
       const dependencies: string[] = [];
 
-      options.get({ get: createDependenciesSpy(dependencies) });
+      options.get({ get: createDependenciesSpy(recoilId, dependencies) });
       const unsubscribes: Callback[] = [];
       dependencies.forEach((key) => {
         const unsubscribe = subscribeToRecoilValue(recoilId, key, callback);
@@ -105,13 +105,13 @@ const useSubscribeToRecoilValues = <T>(
 /**
  * Figure out the dependencies tree of each selector
  */
-const createDependenciesSpy = (dependencies: string[]) => {
-  const dependenciesSpy: typeof getRecoilValue = (...params) => {
-    const recoilValueOptions = params[1];
+const createDependenciesSpy = (recoilId: string, dependencies: string[]) => {
+  const dependenciesSpy: PreflightGetRecoilValue = (...params) => {
+    const recoilValueOptions = params[0];
     dependencies.push(recoilValueOptions.key);
 
     if (isAtomOptions(recoilValueOptions)) {
-      return getRecoilValue(...params);
+      return getRecoilValue(recoilId, ...params);
     } else {
       return recoilValueOptions.get({ get: dependenciesSpy });
     }

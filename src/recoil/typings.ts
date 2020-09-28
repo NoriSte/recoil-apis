@@ -2,7 +2,7 @@ export type AtomOptions<T extends any = any> = { key: string; default: T };
 
 export type SelectorOptions<T extends any = any> = {
   key: string;
-  get: ({ get }: { get: GetRecoilValue }) => T;
+  get: ({ get }: { get: PreflightGetRecoilValue }) => T;
   set?: (
     {
       get,

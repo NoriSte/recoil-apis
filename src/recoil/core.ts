@@ -35,7 +35,6 @@ export const registerRecoilValue = <T>(
   options: RecoilValueOptions<T>
 ) => {
   const key = options.key;
-  console.log(recoilId);
   const recoilValues = getRecoilValues(recoilId);
 
   if (recoilValues[key]) {
@@ -95,7 +94,7 @@ export const getRecoilValue: GetRecoilValue = <T>(
 ): T => {
   return isAtomOptions(options)
     ? getAtomValue(recoilId, options)
-    : getSelectorValue(options);
+    : getSelectorValue(recoilId, options);
 };
 
 /**
@@ -124,33 +123,26 @@ export const getPreflightGetRecoilValue = <T>(recoilId: string) => (
   options: RecoilValueOptions<T>
 ): T => {
   return isAtomOptions(options)
-    ? getPreflightAtomValue(recoilId)
-    : getSelectorValue;
-};
-
-/**
- * Creates a function that gets the current Recoil Atom' value
- * @private
- */
-export const getPreflightAtomValue = <T>(recoilId: string) => (
-  options: AtomOptions<T>
-): T => {
-  registerRecoilValue(recoilId, options);
-  const recoilValues = getRecoilValues(recoilId);
-  const recoilValue = recoilValues[options.key];
-  if (recoilValue.type !== "atom") {
-    throw new Error(`${recoilValue.key} is not an atom`);
-  }
-
-  return recoilValue.value;
+    ? getAtomValue<T>(recoilId, options)
+    : getSelectorValue<T>(recoilId, options);
 };
 
 /**
  * Get the current Recoil Selector' value
  * @private
  */
-export const getSelectorValue = <T>(options: SelectorOptions<T>): T =>
-  options.get({ get: getRecoilValue });
+export const getSelectorValue = <T>(
+  recoilId: string,
+  options: SelectorOptions<T>
+): T => options.get({ get: getPreflightGetRecoilValue(recoilId) });
+
+/**
+ * Creates a function thet Get the current Recoil Selector' value
+ * @private
+ */
+export const getPreflightGetSelectorValue = <T>(recoilId: string) => (
+  options: SelectorOptions<T>
+): T => options.get({ get: getPreflightGetRecoilValue(recoilId) });
 
 /**
  * Set the Recoil Atom and notify the subscribers
