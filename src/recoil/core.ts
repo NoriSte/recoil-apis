@@ -1,5 +1,5 @@
 import {
-  RecoilValue,
+  RecoilStore,
   AtomOptions,
   GetRecoilValue,
   isAtomOptions,
@@ -12,14 +12,14 @@ import {
 /**
  * Different RecoilRoots have different stores
  */
-const recoilStores: Record<string, Record<string, RecoilValue>> = {};
-const getRecoilValues = (recoilId: string) => {
+const recoilStores: RecoilStore = {};
+const getRecoilStore = (recoilId: string) => {
   recoilStores[recoilId] = recoilStores[recoilId] || {};
   return recoilStores[recoilId];
 };
 
 /**
- * Creates a new, unique, Recoil id
+ * Create a new, unique, Recoil id
  */
 let lastRecoilId = 0;
 export const generateRecoilId = () => {
@@ -27,22 +27,22 @@ export const generateRecoilId = () => {
 };
 
 /**
- * Register a new Recoil Value.
+ * Register a new Recoil Value, it is idempotent.
  * @private
  */
 export const registerRecoilValue = <T>(
   recoilId: string,
   options: RecoilValueOptions<T>
 ) => {
-  const key = options.key;
-  const recoilValues = getRecoilValues(recoilId);
+  const { key } = options;
+  const recoilStore = getRecoilStore(recoilId);
 
-  if (recoilValues[key]) {
+  if (recoilStore[key]) {
     return;
   }
 
   if (isAtomOptions(options)) {
-    recoilValues[key] = {
+    recoilStore[key] = {
       type: "atom",
       key,
       default: options.default,
@@ -50,7 +50,7 @@ export const registerRecoilValue = <T>(
       subscribers: []
     };
   } else {
-    recoilValues[key] = {
+    recoilStore[key] = {
       type: "selector",
       key,
       subscribers: []
@@ -62,17 +62,16 @@ export const registerRecoilValue = <T>(
  * Subscribe to all the updates of a Recoil Value.
  * @private
  */
-export const subscribeToRecoilValue = <T>(
+export const subscribeToRecoilValue = (
   recoilId: string,
   key: string,
   callback: RecoilValueSubscriber
 ) => {
-  const recoilValues = getRecoilValues(recoilId);
-  const recoilValue = recoilValues[key];
+  const recoilValue = getRecoilStore(recoilId)[key];
   const { subscribers } = recoilValue;
-  if (subscribers.indexOf(callback) !== -1) {
-    console.log("Already subscribed to Recoil Value");
-    return;
+
+  if (subscribers.includes(callback)) {
+    throw new Error("Already subscribed to Recoil Value");
   }
 
   subscribers.push(callback);
@@ -91,11 +90,21 @@ export const subscribeToRecoilValue = <T>(
 export const getRecoilValue: GetRecoilValue = <T>(
   recoilId: string,
   options: RecoilValueOptions<T>
-): T => {
-  return isAtomOptions(options)
+): T =>
+  isAtomOptions(options)
     ? getAtomValue(recoilId, options)
     : getSelectorValue(recoilId, options);
-};
+
+/**
+ * Create a function that gets the current Recoil Value' value without passing the recoil id
+ * @private
+ */
+export const getPreflightGetRecoilValue = <T>(recoilId: string) => (
+  options: RecoilValueOptions<T>
+): T =>
+  isAtomOptions(options)
+    ? getAtomValue<T>(recoilId, options)
+    : getSelectorValue<T>(recoilId, options);
 
 /**
  * Get the current Recoil Atom' value
@@ -106,25 +115,13 @@ export const getAtomValue = <T>(
   options: AtomOptions<T>
 ): T => {
   registerRecoilValue(recoilId, options);
-  const recoilValues = getRecoilValues(recoilId);
-  const recoilValue = recoilValues[options.key];
+  const recoilValue = getRecoilStore(recoilId)[options.key];
+
   if (recoilValue.type !== "atom") {
     throw new Error(`${recoilValue.key} is not an atom`);
   }
 
   return recoilValue.value;
-};
-
-/**
- * Creates a function that gets the current Recoil Value' value
- * @private
- */
-export const getPreflightGetRecoilValue = <T>(recoilId: string) => (
-  options: RecoilValueOptions<T>
-): T => {
-  return isAtomOptions(options)
-    ? getAtomValue<T>(recoilId, options)
-    : getSelectorValue<T>(recoilId, options);
 };
 
 /**
@@ -137,7 +134,7 @@ export const getSelectorValue = <T>(
 ): T => options.get({ get: getPreflightGetRecoilValue(recoilId) });
 
 /**
- * Creates a function thet Get the current Recoil Selector' value
+ * Create a function thet Get the current Recoil Selector' value without passing the recoil id
  * @private
  */
 export const getPreflightGetSelectorValue = <T>(recoilId: string) => (
@@ -145,15 +142,14 @@ export const getPreflightGetSelectorValue = <T>(recoilId: string) => (
 ): T => options.get({ get: getPreflightGetRecoilValue(recoilId) });
 
 /**
- * Set the Recoil Atom and notify the subscribers
+ * Create a function that sets the Recoil Atom and notify the subscribers without passing the recoil id
  * @private
  */
-export const setAtomValue: SetRecoilValue = <T>(
+export const getPreflightSetAtomValue: SetRecoilValue = <T>(
   recoilId: string,
   options: RecoilValueOptions<T>
 ) => (value: T) => {
-  const recoilValues = getRecoilValues(recoilId);
-  const recoilValue = recoilValues[options.key];
+  const recoilValue = getRecoilStore(recoilId)[options.key];
 
   if (recoilValue.type !== "atom") {
     throw new Error(`${recoilValue.key} is not an atom`);
@@ -177,14 +173,14 @@ export const setRecoilValue = <T>(
   value: T
 ) => {
   if (isAtomOptions(options)) {
-    setAtomValue<T>(recoilId, options)(value);
+    getPreflightSetAtomValue<T>(recoilId, options)(value);
   } else {
     setRecoilValue(recoilId, options, value);
   }
 };
 
 /**
- * Creates a function that sets a Recoil' value
+ * Create a function that sets a Recoil' value without passing the recoil id
  * @private
  */
 export const getPreflightSetRecoilValue = <T>(recoilId: string) => (
@@ -192,7 +188,7 @@ export const getPreflightSetRecoilValue = <T>(recoilId: string) => (
   value: T
 ) => {
   if (isAtomOptions(options)) {
-    setAtomValue<T>(recoilId, options)(value);
+    getPreflightSetAtomValue<T>(recoilId, options)(value);
   } else {
     setRecoilValue(recoilId, options, value);
   }

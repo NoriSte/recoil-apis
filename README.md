@@ -2,6 +2,7 @@ Goals
 
 - implementing Recoil' atoms and selectors APIs
 - only getters and setters, only sync
+- https://kentcdodds.com/blog/how-to-implement-usestate-with-usereducer
 
 ### TODO
 

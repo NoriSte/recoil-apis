@@ -1,3 +1,7 @@
+/* eslint-disable no-use-before-define */
+
+export type RecoilStore = Record<string, Record<string, RecoilValue>>;
+
 export type AtomOptions<T extends any = any> = { key: string; default: T };
 
 export type SelectorOptions<T extends any = any> = {
@@ -13,14 +17,6 @@ export type SelectorOptions<T extends any = any> = {
     },
     newValue: T
   ) => void;
-};
-
-export const isAtomOptions = (options: any): options is AtomOptions<any> => {
-  const atomOptions = options as AtomOptions<any>;
-  return (
-    typeof atomOptions.key === "string" &&
-    Object.keys(options).includes("default")
-  );
 };
 
 export type RecoilValueOptions<T extends any = any> =
@@ -61,6 +57,9 @@ export type SetRecoilState = <T extends any = any>(
   value: T
 ) => void;
 
+/**
+ * Preflight functions do not require to pass the recoil id
+ */
 export type PreflightGetRecoilValue = <T extends any = any>(
   options: RecoilValueOptions<T>
 ) => T;
@@ -68,3 +67,12 @@ export type PreflightSetRecoilValue = <T extends any = any>(
   options: RecoilValueOptions<T>,
   value: T
 ) => void;
+
+/**
+ * Distinguish Atom options from Selector options
+ */
+export const isAtomOptions = (
+  options: RecoilValueOptions<any>
+): options is AtomOptions<any> => {
+  return Object.keys(options).includes("default");
+};

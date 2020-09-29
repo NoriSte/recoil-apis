@@ -1,6 +1,6 @@
 import * as React from "react";
 import "@testing-library/jest-dom";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "./App";
 import { RecoilRoot } from "./recoil/RecoilRoot";
@@ -27,7 +27,7 @@ describe("Smoke tests", () => {
       "Render: EchoInput",
       "Render: TextInput2",
       "Render: TextState1CharacterCount",
-      "Render: TextState1CharCountStateForTwo",
+      "Render: TextState1CharCountStateByTwo",
       "Render: Texts",
       "Render: SetTexts"
     ]);
@@ -51,7 +51,7 @@ describe("Recoil API", () => {
       "Render: TextInput",
       "Render: EchoInput",
       "Render: TextState1CharacterCount",
-      "Render: TextState1CharCountStateForTwo",
+      "Render: TextState1CharCountStateByTwo",
       "Render: Texts",
       "Render: SetTexts"
     ]);
@@ -66,7 +66,7 @@ describe("Recoil API", () => {
       screen.getByText("Both texts, splitted by a dash: a-")
     ).toBeInTheDocument();
 
-    // typing a second letter
+    // typing another letter
     consoleMock.mockClear();
     await userEvent.type(screen.getByPlaceholderText("textState1"), "b");
 
@@ -74,7 +74,7 @@ describe("Recoil API", () => {
       "Render: TextInput",
       "Render: EchoInput",
       "Render: TextState1CharacterCount",
-      "Render: TextState1CharCountStateForTwo",
+      "Render: TextState1CharCountStateByTwo",
       "Render: Texts",
       "Render: SetTexts"
     ]);
@@ -126,89 +126,28 @@ describe("Recoil API", () => {
     ).toBeInTheDocument();
   });
 
-  test("Updating the atom should force the subscribed components to re-render", async () => {
+  test("Updating the selector should force the subscribed components to re-render", async () => {
     render(
       <RecoilRoot>
         <App />
       </RecoilRoot>
     );
 
-    const consoleMock = jest.fn();
+    // typing a in the first input field
+    await userEvent.type(screen.getByPlaceholderText("textState1"), "ab");
+    // typing a in the second input field
+    await userEvent.type(screen.getByPlaceholderText("textState2"), "cd");
 
-    // typing a letter in the first input field
-    console.log = consoleMock;
-    await userEvent.type(screen.getByPlaceholderText("textState1"), "a");
-
-    expect(extractLog(consoleMock)).toEqual([
-      "Render: TextInput",
-      "Render: EchoInput",
-      "Render: TextState1CharacterCount",
-      "Render: TextState1CharCountStateForTwo",
-      "Render: Texts",
-      "Render: SetTexts"
-    ]);
-    expect(screen.getByText("Echoing textState1: a")).toBeInTheDocument();
-    expect(
-      screen.getByText("textState1 contains 1 characters")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("textState1 contains 2 characters (multiplied for two)")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Both texts, splitted by a dash: a-")
-    ).toBeInTheDocument();
-
-    // typing another letter in the first input field
-    consoleMock.mockClear();
-    await userEvent.type(screen.getByPlaceholderText("textState1"), "b");
-
-    expect(extractLog(consoleMock)).toEqual([
-      "Render: TextInput",
-      "Render: EchoInput",
-      "Render: TextState1CharacterCount",
-      "Render: TextState1CharCountStateForTwo",
-      "Render: Texts",
-      "Render: SetTexts"
-    ]);
-
-    expect(screen.getByText("Echoing textState1: ab")).toBeInTheDocument();
-    expect(
-      screen.getByText("textState1 contains 2 characters")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("textState1 contains 4 characters (multiplied for two)")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText("Both texts, splitted by a dash: ab-")
-    ).toBeInTheDocument();
-
-    // typing a letter in the second input field
-    consoleMock.mockClear();
-    await userEvent.type(screen.getByPlaceholderText("textState2"), "c");
-    expect(extractLog(consoleMock)).toEqual([
-      "Render: TextInput2",
-      "Render: Texts",
-      "Render: SetTexts"
-    ]);
-    expect(
-      screen.getByText("Both texts, splitted by a dash: ab-c")
-    ).toBeInTheDocument();
-
-    // typing another in the second input field
-    consoleMock.mockClear();
-    await userEvent.type(screen.getByPlaceholderText("textState2"), "d");
-    expect(extractLog(consoleMock)).toEqual([
-      "Render: TextInput2",
-      "Render: Texts",
-      "Render: SetTexts"
-    ]);
+    // smoke test
     expect(
       screen.getByText("Both texts, splitted by a dash: ab-cd")
     ).toBeInTheDocument();
 
     // setting both the atoms at once
     await userEvent.type(screen.getByPlaceholderText("setTexts"), "ef-gh");
-    consoleMock.mockClear();
+
+    const consoleMock = jest.fn();
+    console.log = consoleMock;
     await userEvent.click(
       screen.getByRole("button", { name: "Set both texts" })
     );
@@ -221,7 +160,7 @@ describe("Recoil API", () => {
       "Render: EchoInput",
       "Render: TextInput2",
       "Render: TextState1CharacterCount",
-      "Render: TextState1CharCountStateForTwo",
+      "Render: TextState1CharCountStateByTwo",
       "Render: Texts",
       "Render: SetTexts"
     ]);
@@ -245,4 +184,5 @@ describe("Recoil API", () => {
   });
 });
 
-const extractLog = (logMock) => logMock.mock.calls.map((params) => params[0]);
+const extractLog = (logMock: jest.Mock) =>
+  logMock.mock.calls.map((params) => params[0]);
