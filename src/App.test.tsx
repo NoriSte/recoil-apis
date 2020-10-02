@@ -1,9 +1,12 @@
+import { FC } from "react";
+import { AtomOptions } from "./recoil";
 import * as React from "react";
+import { useEffect, useState } from "react";
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { useRecoilState, RecoilRoot } from "./recoil";
 import App from "./App";
-import { RecoilRoot } from "./recoil/RecoilRoot";
 
 describe("Smoke tests", () => {
   test("The app should work", () => {
@@ -184,5 +187,46 @@ describe("Recoil API", () => {
   });
 });
 
+describe("RecoilRoot", () => {
+  test("Should render indipendent Recoil components", () => {
+    const atom = {
+      key: "text",
+      default: ""
+    };
+    render(
+      <>
+        <RecoilRoot>
+          <SetAtomOnMount text="hello" value="world" atom={atom} />
+        </RecoilRoot>
+        <RecoilRoot>
+          <SetAtomOnMount text="hello" value="moon" atom={atom} />
+        </RecoilRoot>
+      </>
+    );
+
+    expect(screen.getByText("hello world")).toBeInTheDocument();
+    expect(screen.getByText("hello moon")).toBeInTheDocument();
+  });
+});
+
 const extractLog = (logMock: jest.Mock) =>
   logMock.mock.calls.map((params) => params[0]);
+
+const SetAtomOnMount: FC<{
+  text: string;
+  atom: AtomOptions<string>;
+  value: string;
+}> = (props) => {
+  const [atomValue, setAtomValue] = useRecoilState(props.atom);
+  const [atomInitialized, setAtomInitialized] = useState<boolean>(false);
+  useEffect(() => {
+    if (atomInitialized) return;
+    setAtomValue(props.value);
+    setAtomInitialized(false);
+  }, [setAtomValue, props.value, atomInitialized, setAtomInitialized]);
+  return (
+    <p>
+      {props.text} {atomValue}
+    </p>
+  );
+};

@@ -15,7 +15,7 @@ const logRender = (componentName: string) =>
 export default function App() {
   return (
     <div className="App">
-      <h1>Re-implementing basic Recoil API</h1>
+      <h1>Re-implementing basic Recoil v0.11 API</h1>
       <h3>Check out the README</h3>
       <TextInput1 />
       <EchoInput />

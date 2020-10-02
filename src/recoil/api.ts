@@ -3,7 +3,7 @@ import {
   isAtomOptions,
   SelectorOptions,
   RecoilValueOptions,
-  PreflightGetRecoilValue
+  RecoilIdFreeFunction
 } from "./typings";
 import { useReducer, useEffect, useCallback, useContext } from "react";
 import { RecoilContext } from "./RecoilRoot";
@@ -12,8 +12,8 @@ import {
   registerRecoilValue,
   subscribeToRecoilValue,
   getPreflightSetAtomValue,
-  getPreflightGetRecoilValue,
-  getPreflightSetRecoilValue
+  createRecoilIdFreeSetRecoilValue,
+  createRecoilIdFreeGetRecoilValue
 } from "./core";
 
 /**
@@ -69,8 +69,8 @@ export const useRecoilState = <T>(options: RecoilValueOptions<T>) => {
       if (options.set)
         options.set(
           {
-            get: getPreflightGetRecoilValue(recoilId),
-            set: getPreflightSetRecoilValue(recoilId)
+            get: createRecoilIdFreeGetRecoilValue(recoilId),
+            set: createRecoilIdFreeSetRecoilValue(recoilId)
           },
           newValue
         );
@@ -110,7 +110,7 @@ const useSubscribeToRecoilValues = <T>(
  * Figure out the dependencies tree of each selector
  */
 const createDependenciesSpy = (recoilId: string, dependencies: string[]) => {
-  const dependenciesSpy: PreflightGetRecoilValue = (
+  const dependenciesSpy: RecoilIdFreeFunction<typeof getRecoilValue> = (
     options: RecoilValueOptions
   ) => {
     dependencies.push(options.key);

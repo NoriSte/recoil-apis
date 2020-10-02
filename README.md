@@ -6,6 +6,9 @@ Goals
 
 ### TODO
 
+- check what happens if a selector subscribes twice to the same atom
+- check what happen if a component change the observed atom
+
 - add tests
 - check if removing some useless (used just once) Generics allows TS to infer ttpes properly
 

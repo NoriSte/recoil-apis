@@ -6,14 +6,14 @@ export type AtomOptions<T extends any = any> = { key: string; default: T };
 
 export type SelectorOptions<T extends any = any> = {
   key: string;
-  get: ({ get }: { get: PreflightGetRecoilValue }) => T;
+  get: ({ get }: { get: RecoilIdFreeFunction<GetRecoilValue, T> }) => any;
   set?: (
     {
       get,
       set
     }: {
-      get: PreflightGetRecoilValue;
-      set: PreflightSetRecoilValue;
+      get: RecoilIdFreeFunction<GetRecoilValue>;
+      set: RecoilIdFreeFunction<SetRecoilValue>;
     },
     newValue: T
   ) => void;
@@ -60,6 +60,7 @@ export type SetRecoilState = <T extends any = any>(
 /**
  * Preflight functions do not require to pass the recoil id
  */
+/*
 export type PreflightGetRecoilValue = <T extends any = any>(
   options: RecoilValueOptions<T>
 ) => T;
@@ -67,6 +68,7 @@ export type PreflightSetRecoilValue = <T extends any = any>(
   options: RecoilValueOptions<T>,
   value: T
 ) => void;
+*/
 
 /**
  * Distinguish Atom options from Selector options
@@ -76,3 +78,23 @@ export const isAtomOptions = (
 ): options is AtomOptions<any> => {
   return Object.keys(options).includes("default");
 };
+
+export type RecoilIdFreeArgs<T extends any[]> = T extends []
+  ? []
+  : T extends [string, ...(infer R)]
+  ? R
+  : T;
+
+export type RecoilIdFreeFunction<
+  F extends (recoilId: string, ...args: any[]) => T,
+  T extends any = any
+> = (...args: RecoilIdFreeArgs<Parameters<F>>) => T;
+//
+
+export function createRecoilIdFreeFunction<
+  F extends (recoilId: string, ...args: any[]) => any
+>(recoilId: string, func: F): RecoilIdFreeFunction<F> {
+  return (...args: RecoilIdFreeArgs<Parameters<F>>): ReturnType<F> => {
+    return func(recoilId, ...args);
+  };
+}
