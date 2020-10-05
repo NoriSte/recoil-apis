@@ -35,7 +35,7 @@ export default function App() {
 // atom
 
 // all the code comes from Recoil' Getting Started guide https://recoiljs.org/docs/introduction/getting-started
-const textState1 = atom<string>({
+const textState1 = atom({
   key: "textState1",
   default: ""
 });

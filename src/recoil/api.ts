@@ -2,8 +2,7 @@ import {
   AtomOptions,
   isAtomOptions,
   SelectorOptions,
-  RecoilValueOptions,
-  RecoilIdFreeFunction
+  RecoilValueOptions
 } from "./typings";
 import { useReducer, useEffect, useCallback, useContext } from "react";
 import { RecoilContext } from "./RecoilRoot";
@@ -11,16 +10,16 @@ import {
   getRecoilValue,
   registerRecoilValue,
   subscribeToRecoilValue,
-  getPreflightSetAtomValue,
-  createRecoilIdFreeSetRecoilValue,
-  createRecoilIdFreeGetRecoilValue
+  createPreflightSetAtomValue,
+  createPreflightGetRecoilValue,
+  createPreflightSetRecoilValue
 } from "./core";
 
 /**
  * Register a new atom.
  * Please note: it does nothing for the sake of this exercise
  */
-export const atom = <T extends any = any>(atomOptions: AtomOptions<T>) => {
+export const atom = <T>(atomOptions: AtomOptions<T>) => {
   return atomOptions;
 };
 
@@ -28,9 +27,7 @@ export const atom = <T extends any = any>(atomOptions: AtomOptions<T>) => {
  * Register a new selector.
  * Please note: it does nothing for the sake of this exercise
  */
-export const selector = <T extends any = any>(
-  selectorOptions: SelectorOptions<T>
-) => {
+export const selector = <T>(selectorOptions: SelectorOptions<T>) => {
   return selectorOptions;
 };
 
@@ -62,15 +59,15 @@ export const useRecoilState = <T>(options: RecoilValueOptions<T>) => {
   registerRecoilValue(recoilId, options);
 
   if (isAtomOptions(options)) {
-    const setter = getPreflightSetAtomValue(recoilId, options);
+    const setter = createPreflightSetAtomValue(recoilId, options);
     return [currentValue, setter] as const;
   } else {
     const setter = (newValue: T) => {
       if (options.set)
         options.set(
           {
-            get: createRecoilIdFreeGetRecoilValue(recoilId),
-            set: createRecoilIdFreeSetRecoilValue(recoilId)
+            get: createPreflightGetRecoilValue(recoilId),
+            set: createPreflightSetRecoilValue(recoilId)
           },
           newValue
         );
@@ -110,9 +107,7 @@ const useSubscribeToRecoilValues = <T>(
  * Figure out the dependencies tree of each selector
  */
 const createDependenciesSpy = (recoilId: string, dependencies: string[]) => {
-  const dependenciesSpy: RecoilIdFreeFunction<typeof getRecoilValue> = (
-    options: RecoilValueOptions
-  ) => {
+  const dependenciesSpy = (options: RecoilValueOptions<any>) => {
     dependencies.push(options.key);
 
     if (isAtomOptions(options)) {

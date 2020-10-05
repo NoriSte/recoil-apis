@@ -6,8 +6,7 @@ import {
   SetRecoilValue,
   SelectorOptions,
   RecoilValueOptions,
-  RecoilValueSubscriber,
-  createRecoilIdFreeFunction
+  RecoilValueSubscriber
 } from "./typings";
 
 /**
@@ -91,25 +90,46 @@ export const subscribeToRecoilValue = (
 export const getRecoilValue: GetRecoilValue = <T>(
   recoilId: string,
   options: RecoilValueOptions<T>
+): T => coreGetRecoilValue(recoilId, options);
+/**
+ * Create a function that get the current Recoil Value' value
+ * @private
+ */
+export const createPreflightGetRecoilValue = <T>(recoilId: string) => (
+  options: RecoilValueOptions<T>
+): T => coreGetRecoilValue(recoilId, options);
+/**
+ * Get the current Recoil Value' value
+ * @private
+ */
+const coreGetRecoilValue: GetRecoilValue = <T>(
+  recoilId: string,
+  options: RecoilValueOptions<T>
 ): T =>
   isAtomOptions(options)
     ? getAtomValue(recoilId, options)
     : getSelectorValue(recoilId, options);
 
 /**
- * Create a function that gets the current Recoil Value' value without passing the recoil id
+ * Get the current Recoil Atom' value
  * @private
  */
-export const createRecoilIdFreeGetRecoilValue = (recoilId: string) =>
-  createRecoilIdFreeFunction(recoilId, getRecoilValue);
-
+export const getAtomValue = <T>(recoilId: string, options: AtomOptions<T>): T =>
+  coreGetAtomValue(recoilId, options);
+/**
+ * Create a function that get the current Recoil Atom' value
+ * @private
+ */
+export const createPreflightGetAtomValue = <T>(recoilId: string) => (
+  options: RecoilValueOptions<T>
+): T => coreGetAtomValue(recoilId, options);
 /**
  * Get the current Recoil Atom' value
  * @private
  */
-export const getAtomValue = <T>(
+const coreGetAtomValue = <T>(
   recoilId: string,
-  options: AtomOptions<T>
+  options: RecoilValueOptions<T>
 ): T => {
   registerRecoilValue(recoilId, options);
   const recoilValue = getRecoilStore(recoilId)[options.key];
@@ -128,26 +148,25 @@ export const getAtomValue = <T>(
 export const getSelectorValue = <T>(
   recoilId: string,
   options: SelectorOptions<T>
-): T =>
-  options.get({ get: createRecoilIdFreeFunction(recoilId, getRecoilValue) });
-
-/**
- * Create a function thet Get the current Recoil Selector' value without passing the recoil id
- * @private
- */
-export const getPreflightGetSelectorValue = <T>(recoilId: string) => (
-  options: SelectorOptions<T>
-): T =>
-  options.get({ get: createRecoilIdFreeFunction(recoilId, getRecoilValue) });
+): T => options.get({ get: createPreflightGetRecoilValue(recoilId) });
 
 /**
  * Create a function that sets the Recoil Atom and notify the subscribers without passing the recoil id
  * @private
  */
-export const getPreflightSetAtomValue: SetRecoilValue = <T>(
+export const createPreflightSetAtomValue = <T>(
   recoilId: string,
   options: RecoilValueOptions<T>
-) => (value: T) => {
+) => (value: T) => coreSetAtomValue(recoilId, options, value);
+/**
+ * Set the Recoil Atom and notify the subscribers without passing the recoil id
+ * @private
+ */
+const coreSetAtomValue: SetRecoilValue = <T>(
+  recoilId: string,
+  options: RecoilValueOptions<T>,
+  value: T
+) => {
   const recoilValue = getRecoilStore(recoilId)[options.key];
 
   if (recoilValue.type !== "atom") {
@@ -170,17 +189,28 @@ export const setRecoilValue = <T>(
   recoilId: string,
   options: RecoilValueOptions<T>,
   value: T
+) => coreSetRecoilValue(recoilId, options, value);
+
+/**
+ * Create a function that provide a Recoil Value setter
+ * @private
+ */
+export const createPreflightSetRecoilValue = <T>(recoilId: string) => (
+  options: RecoilValueOptions<T>,
+  value: T
+) => coreSetRecoilValue(recoilId, options, value);
+/**
+ * Provide a Recoil Value setter
+ * @private
+ */
+const coreSetRecoilValue = <T>(
+  recoilId: string,
+  options: RecoilValueOptions<T>,
+  value: T
 ) => {
   if (isAtomOptions(options)) {
-    getPreflightSetAtomValue<T>(recoilId, options)(value);
+    createPreflightSetAtomValue<T>(recoilId, options)(value);
   } else {
     setRecoilValue(recoilId, options, value);
   }
 };
-
-/**
- * Create a function that sets a Recoil' value without passing the recoil id
- * @private
- */
-export const createRecoilIdFreeSetRecoilValue = (recoilId: string) =>
-  createRecoilIdFreeFunction(recoilId, setRecoilValue);
