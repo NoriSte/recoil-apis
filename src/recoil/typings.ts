@@ -6,14 +6,14 @@ export type AtomOptions<T> = { key: string; default: T };
 
 export type SelectorOptions<T> = {
   key: string;
-  get: ({ get }: { get: PreflightGetRecoilValue }) => T;
+  get: ({ get }: { get: GetRecoilValue }) => T;
   set?: (
     {
       get,
       set
     }: {
-      get: PreflightGetRecoilValue;
-      set: PreflightSetRecoilValue;
+      get: GetRecoilValue;
+      set: SetRecoilValue;
     },
     newValue: T
   ) => void;
@@ -37,28 +37,33 @@ export type RecoilValue<T> = {
 
 export type RecoilValueSubscriber = () => void;
 
-export type GetRecoilValue = <T>(
+/**
+ * Core functions require to pass the recoil id
+ */
+export type CoreGetRecoilValue = <T>(
   recoilId: string,
   options: RecoilValueOptions<T>
 ) => T;
-export type GetAtomValue = <T>(recoilId: string, options: AtomOptions<T>) => T;
-export type SetRecoilValue = <T>(
+export type CoreGetAtomValue = <T>(
+  recoilId: string,
+  options: AtomOptions<T>
+) => T;
+export type CoreSetRecoilValue = <T>(
   recoilId: string,
   options: RecoilValueOptions<T>,
   value: T
 ) => void;
-export type SetRecoilState = <T>(
+export type CoreSetRecoilState = <T>(
   recoilId: string,
   options: RecoilValueOptions<T>,
   value: T
 ) => void;
 
 /**
- * Preflight functions do not require to pass the recoil id
+ * Recoil id-free functions
  */
-
-export type PreflightGetRecoilValue = <T>(options: RecoilValueOptions<T>) => T;
-export type PreflightSetRecoilValue = <T>(
+export type GetRecoilValue = <T>(options: RecoilValueOptions<T>) => T;
+export type SetRecoilValue = <T>(
   options: RecoilValueOptions<T>,
   value: T
 ) => void;

@@ -1,10 +1,10 @@
 import {
-  RecoilStore,
   AtomOptions,
-  GetRecoilValue,
+  RecoilStore,
   isAtomOptions,
-  SetRecoilValue,
   SelectorOptions,
+  CoreGetRecoilValue,
+  CoreSetRecoilValue,
   RecoilValueOptions,
   RecoilValueSubscriber
 } from "./typings";
@@ -87,7 +87,7 @@ export const subscribeToRecoilValue = (
  * Get the current Recoil Value' value
  * @private
  */
-export const getRecoilValue: GetRecoilValue = <T>(
+export const getRecoilValue: CoreGetRecoilValue = <T>(
   recoilId: string,
   options: RecoilValueOptions<T>
 ): T => coreGetRecoilValue(recoilId, options);
@@ -102,7 +102,7 @@ export const createPreflightGetRecoilValue = <T>(recoilId: string) => (
  * Get the current Recoil Value' value
  * @private
  */
-const coreGetRecoilValue: GetRecoilValue = <T>(
+const coreGetRecoilValue: CoreGetRecoilValue = <T>(
   recoilId: string,
   options: RecoilValueOptions<T>
 ): T =>
@@ -162,7 +162,7 @@ export const createPreflightSetAtomValue = <T>(
  * Set the Recoil Atom and notify the subscribers without passing the recoil id
  * @private
  */
-const coreSetAtomValue: SetRecoilValue = <T>(
+const coreSetAtomValue: CoreSetRecoilValue = <T>(
   recoilId: string,
   options: RecoilValueOptions<T>,
   value: T
