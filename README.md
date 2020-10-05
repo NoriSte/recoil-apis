@@ -1,16 +1,25 @@
-Goals
+# Re-implementing basic Recoil API
 
-- implementing Recoil' atoms and selectors APIs
-- only getters and setters, only sync
-- https://kentcdodds.com/blog/how-to-implement-usestate-with-usereducer
+The goal of this repository is adding a new step to my learning path: re-implementing framework API (inspired by [Kent' article](https://kentcdodds.com/blog/how-to-implement-usestate-with-usereducer)).
+
+The implementd Recoil (v0.11) API are:
+
+- `RecoilRoot`
+- `atom` (sync version only)
+- `selector` (sync version only)
+- Based on Recoil
+
+Notes for the article:
+
+- playing with the infer types
+- https://bennetthardwick.com/blog/recoil-js-clone-from-scratch-in-100-lines
 
 ### TODO
 
-- check what happens if a selector subscribes twice to the same atom
-- check what happen if a component change the observed atom
+checks:
 
-- add tests
-- check if removing some useless (used just once) Generics allows TS to infer ttpes properly
+- check what happens if a selector subscribes twice to the same atom X
+- check what happen if a component change the observed atom √
 
 Article topics:
 
@@ -31,7 +40,7 @@ Article topics:
       - in order to get/set the value and access selectors get
       - in order to collect the subscriptions
     - a subscriber
-    - getters and settersù
+    - getters and setters
   - api
     - atom and selector creators
     - a subscribing useValue hook
