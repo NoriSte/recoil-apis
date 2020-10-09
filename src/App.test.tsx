@@ -1,5 +1,5 @@
 import { FC } from "react";
-import { AtomOptions } from "./recoil";
+import { Atom } from "./recoil";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import "@testing-library/jest-dom";
@@ -214,7 +214,7 @@ const extractLog = (logMock: jest.Mock) =>
 
 const SetAtomOnMount: FC<{
   text: string;
-  atom: AtomOptions<string>;
+  atom: Atom<string>;
   value: string;
 }> = (props) => {
   const [atomValue, setAtomValue] = useRecoilState(props.atom);

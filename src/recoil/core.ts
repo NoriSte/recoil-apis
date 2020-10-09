@@ -1,12 +1,12 @@
 import {
-  AtomOptions,
+  Atom,
+  isAtom,
+  Selector,
+  Subscriber,
+  RecoilValue,
   RecoilStore,
-  isAtomOptions,
-  SelectorOptions,
   CoreGetRecoilValue,
-  CoreSetRecoilValue,
-  RecoilValueOptions,
-  RecoilValueSubscriber
+  CoreSetRecoilValue
 } from "./typings";
 
 /**
@@ -27,26 +27,26 @@ export const generateRecoilId = () => {
 };
 
 /**
- * Register a new Recoil Value, it is idempotent.
+ * Register a new Recoil Value, it' i's idempotent.
  * @private
  */
 export const registerRecoilValue = <T>(
   recoilId: string,
-  options: RecoilValueOptions<T>
+  recoilValue: RecoilValue<T>
 ) => {
-  const { key } = options;
+  const { key } = recoilValue;
   const recoilStore = getRecoilStore(recoilId);
 
   if (recoilStore[key]) {
     return;
   }
 
-  if (isAtomOptions(options)) {
+  if (isAtom(recoilValue)) {
     recoilStore[key] = {
       type: "atom",
       key,
-      default: options.default,
-      value: options.default,
+      default: recoilValue.default,
+      value: recoilValue.default,
       subscribers: []
     };
   } else {
@@ -65,7 +65,7 @@ export const registerRecoilValue = <T>(
 export const subscribeToRecoilValue = (
   recoilId: string,
   key: string,
-  callback: RecoilValueSubscriber
+  callback: Subscriber
 ) => {
   const recoilValue = getRecoilStore(recoilId)[key];
   const { subscribers } = recoilValue;
@@ -89,56 +89,56 @@ export const subscribeToRecoilValue = (
  */
 export const getRecoilValue: CoreGetRecoilValue = <T>(
   recoilId: string,
-  options: RecoilValueOptions<T>
-): T => coreGetRecoilValue(recoilId, options);
+  recoilValue: RecoilValue<T>
+): T => coreGetRecoilValue(recoilId, recoilValue);
 /**
  * Create a function that get the current Recoil Value' value
  * @private
  */
 export const createPreflightGetRecoilValue = <T>(recoilId: string) => (
-  options: RecoilValueOptions<T>
-): T => coreGetRecoilValue(recoilId, options);
+  recoilValue: RecoilValue<T>
+): T => coreGetRecoilValue(recoilId, recoilValue);
 /**
  * Get the current Recoil Value' value
  * @private
  */
 const coreGetRecoilValue: CoreGetRecoilValue = <T>(
   recoilId: string,
-  options: RecoilValueOptions<T>
+  recoilValue: RecoilValue<T>
 ): T =>
-  isAtomOptions(options)
-    ? getAtomValue(recoilId, options)
-    : getSelectorValue(recoilId, options);
+  isAtom(recoilValue)
+    ? getAtomValue(recoilId, recoilValue)
+    : getSelectorValue(recoilId, recoilValue);
 
 /**
  * Get the current Recoil Atom' value
  * @private
  */
-export const getAtomValue = <T>(recoilId: string, options: AtomOptions<T>): T =>
-  coreGetAtomValue(recoilId, options);
+export const getAtomValue = <T>(recoilId: string, recoilAtom: Atom<T>): T =>
+  coreGetAtomValue(recoilId, recoilAtom);
 /**
  * Create a function that get the current Recoil Atom' value
  * @private
  */
 export const createPreflightGetAtomValue = <T>(recoilId: string) => (
-  options: RecoilValueOptions<T>
-): T => coreGetAtomValue(recoilId, options);
+  recoilValue: RecoilValue<T>
+): T => coreGetAtomValue(recoilId, recoilValue);
 /**
  * Get the current Recoil Atom' value
  * @private
  */
 const coreGetAtomValue = <T>(
   recoilId: string,
-  options: RecoilValueOptions<T>
+  recoilValue: RecoilValue<T>
 ): T => {
-  registerRecoilValue(recoilId, options);
-  const recoilValue = getRecoilStore(recoilId)[options.key];
+  registerRecoilValue(recoilId, recoilValue);
+  const coreRecoilValue = getRecoilStore(recoilId)[recoilValue.key];
 
-  if (recoilValue.type !== "atom") {
-    throw new Error(`${recoilValue.key} is not an atom`);
+  if (coreRecoilValue.type !== "atom") {
+    throw new Error(`${coreRecoilValue.key} is not an atom`);
   }
 
-  return recoilValue.value;
+  return coreRecoilValue.value;
 };
 
 /**
@@ -147,8 +147,8 @@ const coreGetAtomValue = <T>(
  */
 export const getSelectorValue = <T>(
   recoilId: string,
-  options: SelectorOptions<T>
-): T => options.get({ get: createPreflightGetRecoilValue(recoilId) });
+  selector: Selector<T>
+): T => selector.get({ get: createPreflightGetRecoilValue(recoilId) });
 
 /**
  * Create a function that sets the Recoil Atom and notify the subscribers without passing the recoil id
@@ -156,29 +156,27 @@ export const getSelectorValue = <T>(
  */
 export const createPreflightSetAtomValue = <T>(
   recoilId: string,
-  options: RecoilValueOptions<T>
-) => (value: T) => coreSetAtomValue(recoilId, options, value);
+  recoilValue: RecoilValue<T>
+) => (value: T) => coreSetAtomValue(recoilId, recoilValue, value);
 /**
  * Set the Recoil Atom and notify the subscribers without passing the recoil id
  * @private
  */
 const coreSetAtomValue: CoreSetRecoilValue = <T>(
   recoilId: string,
-  options: RecoilValueOptions<T>,
+  recoilValue: RecoilValue<T>,
   value: T
 ) => {
-  const recoilValue = getRecoilStore(recoilId)[options.key];
+  const coreRecoilValue = getRecoilStore(recoilId)[recoilValue.key];
 
-  if (recoilValue.type !== "atom") {
-    throw new Error(`${recoilValue.key} is not an atom`);
+  if (coreRecoilValue.type !== "atom") {
+    throw new Error(`${coreRecoilValue.key} is not an atom`);
   }
 
-  if (value === recoilValue.value) {
-    return;
+  if (value !== coreRecoilValue.value) {
+    coreRecoilValue.value = value;
+    coreRecoilValue.subscribers.forEach((callback) => callback());
   }
-
-  recoilValue.value = value;
-  recoilValue.subscribers.forEach((callback) => callback());
 };
 
 /**
@@ -187,30 +185,30 @@ const coreSetAtomValue: CoreSetRecoilValue = <T>(
  */
 export const setRecoilValue = <T>(
   recoilId: string,
-  options: RecoilValueOptions<T>,
+  recoilValue: RecoilValue<T>,
   value: T
-) => coreSetRecoilValue(recoilId, options, value);
+) => coreSetRecoilValue(recoilId, recoilValue, value);
 
 /**
  * Create a function that provide a Recoil Value setter
  * @private
  */
 export const createPreflightSetRecoilValue = <T>(recoilId: string) => (
-  options: RecoilValueOptions<T>,
+  recoilValue: RecoilValue<T>,
   value: T
-) => coreSetRecoilValue(recoilId, options, value);
+) => coreSetRecoilValue(recoilId, recoilValue, value);
 /**
  * Provide a Recoil Value setter
  * @private
  */
 const coreSetRecoilValue = <T>(
   recoilId: string,
-  options: RecoilValueOptions<T>,
+  recoilValue: RecoilValue<T>,
   value: T
 ) => {
-  if (isAtomOptions(options)) {
-    createPreflightSetAtomValue<T>(recoilId, options)(value);
+  if (isAtom(recoilValue)) {
+    createPreflightSetAtomValue<T>(recoilId, recoilValue)(value);
   } else {
-    setRecoilValue(recoilId, options, value);
+    setRecoilValue(recoilId, recoilValue, value);
   }
 };

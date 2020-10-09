@@ -1,10 +1,5 @@
-import {
-  AtomOptions,
-  isAtomOptions,
-  SelectorOptions,
-  RecoilValueOptions
-} from "./typings";
-import { useReducer, useEffect, useCallback, useContext } from "react";
+import { Atom, isAtom, Selector, RecoilValue } from "./typings";
+import { useReducer, useEffect, useContext } from "react";
 import { RecoilContext } from "./RecoilRoot";
 import {
   getRecoilValue,
@@ -19,52 +14,49 @@ import {
  * Register a new atom.
  * Please note: it does nothing for the sake of this exercise
  */
-export const atom = <T>(atomOptions: AtomOptions<T>) => {
-  return atomOptions;
+export const atom = <T>(atom: Atom<T>) => {
+  return atom;
 };
 
 /**
  * Register a new selector.
  * Please note: it does nothing for the sake of this exercise
  */
-export const selector = <T>(selectorOptions: SelectorOptions<T>) => {
-  return selectorOptions;
+export const selector = <T>(selector: Selector<T>) => {
+  return selector;
 };
 
 /**
  * Subscribe to all the Recoil Values updates and return the current value.
  */
-export const useRecoilValue = <T>(options: RecoilValueOptions<T>) => {
+export const useRecoilValue = <T>(recoilValue: RecoilValue<T>) => {
   const recoilId = useRecoilId();
   const [, forceRender] = useReducer((s) => s + 1, 0);
-  const subscriptionCallback = useCallback(() => {
-    forceRender();
-  }, [forceRender]);
 
   // registering a Recoil value requires the recoil id (stored in a React Context), that's why it can't be registered outside a component/hook code
-  registerRecoilValue(recoilId, options);
+  registerRecoilValue(recoilId, recoilValue);
 
-  useSubscribeToRecoilValues(options, subscriptionCallback);
-  return getRecoilValue(recoilId, options);
+  useSubscribeToRecoilValues(recoilValue, forceRender);
+  return getRecoilValue(recoilId, recoilValue);
 };
 
 /**
  * Subscribe to all the Recoil Values updates and return both the current value and a setter.
  */
-export const useRecoilState = <T>(options: RecoilValueOptions<T>) => {
+export const useRecoilState = <T>(recoilValue: RecoilValue<T>) => {
   const recoilId = useRecoilId();
-  const currentValue = useRecoilValue(options);
+  const currentValue = useRecoilValue(recoilValue);
 
   // registering a Recoil value requires the recoil id (stored in a React Context), that's why it can't be registered outside a component/hook code
-  registerRecoilValue(recoilId, options);
+  registerRecoilValue(recoilId, recoilValue);
 
-  if (isAtomOptions(options)) {
-    const setter = createPreflightSetAtomValue(recoilId, options);
+  if (isAtom(recoilValue)) {
+    const setter = createPreflightSetAtomValue(recoilId, recoilValue);
     return [currentValue, setter] as const;
   } else {
     const setter = (newValue: T) => {
-      if (options.set)
-        options.set(
+      if (recoilValue.set)
+        recoilValue.set(
           {
             get: createPreflightGetRecoilValue(recoilId),
             set: createPreflightSetRecoilValue(recoilId)
@@ -81,17 +73,17 @@ type Callback = () => void;
  * Subscribe to all the uopdates from the involved Recoil Values
  */
 const useSubscribeToRecoilValues = <T>(
-  options: RecoilValueOptions<T>,
+  recoilValue: RecoilValue<T>,
   callback: Callback
 ) => {
   const recoilId = useRecoilId();
 
   useEffect(() => {
-    if (isAtomOptions(options)) {
-      return subscribeToRecoilValue(recoilId, options.key, callback);
+    if (isAtom(recoilValue)) {
+      return subscribeToRecoilValue(recoilId, recoilValue.key, callback);
     } else {
       const dependencies: string[] = [];
-      options.get({ get: createDependenciesSpy(recoilId, dependencies) });
+      recoilValue.get({ get: createDependenciesSpy(recoilId, dependencies) });
 
       const unsubscribes: Callback[] = [];
       dependencies.forEach((key) =>
@@ -100,20 +92,20 @@ const useSubscribeToRecoilValues = <T>(
 
       return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
     }
-  }, [recoilId, options, callback]);
+  }, [recoilId, recoilValue, callback]);
 };
 
 /**
  * Figure out the dependencies tree of each selector
  */
 const createDependenciesSpy = (recoilId: string, dependencies: string[]) => {
-  const dependenciesSpy = (options: RecoilValueOptions<any>) => {
-    dependencies.push(options.key);
+  const dependenciesSpy = (recoilValue: RecoilValue<any>) => {
+    dependencies.push(recoilValue.key);
 
-    if (isAtomOptions(options)) {
-      return getRecoilValue(recoilId, options);
+    if (isAtom(recoilValue)) {
+      return getRecoilValue(recoilId, recoilValue);
     } else {
-      return options.get({ get: dependenciesSpy });
+      return recoilValue.get({ get: dependenciesSpy });
     }
   };
 
