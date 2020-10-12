@@ -4,10 +4,10 @@ import { RecoilContext } from "./RecoilRoot";
 import {
   coreGetRecoilValue,
   registerRecoilValue,
-  createPreflightSetAtomValue,
-  createPreflightGetRecoilValue,
-  createPreflightSetRecoilValue,
-  subscribeToRecoilValueUpdatres as subscribeToRecoilValueUpdates
+  createPublicSetAtomValue,
+  createPublicGetRecoilValue,
+  createPublicSetRecoilValue,
+  subscribeToRecoilValueUpdates
 } from "./core";
 
 /**
@@ -55,15 +55,15 @@ export const useRecoilState = <T>(recoilValue: RecoilValue<T>) => {
   registerRecoilValue(recoilId, recoilValue);
 
   if (isAtom(recoilValue)) {
-    const setter = createPreflightSetAtomValue(recoilId, recoilValue);
+    const setter = createPublicSetAtomValue(recoilId, recoilValue);
     return [currentValue, setter] as const;
   } else {
     const setter = (nextValue: T) => {
       if (recoilValue.set)
         recoilValue.set(
           {
-            get: createPreflightGetRecoilValue(recoilId),
-            set: createPreflightSetRecoilValue(recoilId)
+            get: createPublicGetRecoilValue(recoilId),
+            set: createPublicSetRecoilValue(recoilId)
           },
           nextValue
         );

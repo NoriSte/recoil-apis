@@ -39,7 +39,7 @@ export const isAtom = (
 };
 
 // ----------------------------------------------
-// Core, internal types
+// Core types
 // ----------------------------------------------
 
 export type RecoilStores = Record<
