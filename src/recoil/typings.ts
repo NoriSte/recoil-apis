@@ -1,6 +1,8 @@
 /* eslint-disable no-use-before-define */
 
-export type RecoilStore = Record<string, Record<string, CoreRecoilValue<any>>>;
+// ----------------------------------------------
+// Exposed types
+// ----------------------------------------------
 
 export type Atom<T> = { key: string; default: T };
 
@@ -15,12 +17,40 @@ export type Selector<T> = {
       get: GetRecoilValue;
       set: SetRecoilValue;
     },
-    newValue: T
+    nextValue: T
   ) => void;
 };
 
 export type RecoilValue<T> = Atom<T> | Selector<T>;
 
+/**
+ * Recoil id-free functions
+ */
+type GetRecoilValue = <T>(recoilValue: RecoilValue<T>) => T;
+type SetRecoilValue = <T>(recoilValue: RecoilValue<T>, nextValue: T) => void;
+
+/**
+ * Distinguish Atoms from Selectors
+ */
+export const isAtom = (
+  recoilValue: RecoilValue<any>
+): recoilValue is Atom<any> => {
+  return Object.keys(recoilValue).includes("default");
+};
+
+// ----------------------------------------------
+// Core, internal types
+// ----------------------------------------------
+
+export type RecoilStores = Record<
+  string,
+  Record<string, CoreRecoilValue<unknown>>
+>;
+
+/*
+ * The internally stored Recoil values
+ * @private
+ */
 export type CoreRecoilValue<T> = {
   key: string;
   subscribers: Subscriber[];
@@ -36,37 +66,3 @@ export type CoreRecoilValue<T> = {
 );
 
 export type Subscriber = () => void;
-
-/**
- * Core functions require to pass the recoil id
- */
-export type CoreGetRecoilValue = <T>(
-  recoilId: string,
-  recoilValue: RecoilValue<T>
-) => T;
-export type CoreGetAtomValue = <T>(recoilId: string, recoilValue: Atom<T>) => T;
-export type CoreSetRecoilValue = <T>(
-  recoilId: string,
-  recoilValue: RecoilValue<T>,
-  value: T
-) => void;
-export type CoreSetRecoilState = <T>(
-  recoilId: string,
-  recoilValue: RecoilValue<T>,
-  value: T
-) => void;
-
-/**
- * Recoil id-free functions
- */
-export type GetRecoilValue = <T>(recoilValue: RecoilValue<T>) => T;
-export type SetRecoilValue = <T>(recoilValue: RecoilValue<T>, value: T) => void;
-
-/**
- * Distinguish Atoms from Selectors
- */
-export const isAtom = (
-  recoilValue: RecoilValue<any>
-): recoilValue is Atom<any> => {
-  return Object.keys(recoilValue).includes("default");
-};
