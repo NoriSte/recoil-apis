@@ -34,6 +34,7 @@ const coreGetSelectorValue = <T>(recoilId: string, selector: Selector<T>): T =>
 
 /**
  *  Get the current Recoil Value' value
+ * @private
  */
 export const coreGetRecoilValue = <T>(
   recoilId: string,
