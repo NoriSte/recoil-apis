@@ -98,23 +98,20 @@ export const createPublicSetRecoilValue = <T>(recoilId: string) => (
 const coreSetRecoilValue = <T>(
   recoilId: string,
   recoilValue: RecoilValue<T>,
-  value: T
+  nextValue: T
 ) => {
   if (isAtom(recoilValue)) {
-    createPublicSetAtomValue<T>(recoilId, recoilValue)(value);
-  } else {
-    setRecoilValue(recoilId, recoilValue, value);
+    coreSetAtomValue(recoilId, recoilValue, nextValue);
+  } else if (recoilValue.set) {
+    recoilValue.set(
+      {
+        get: createPublicGetRecoilValue(recoilId),
+        set: createPublicSetRecoilValue(recoilId)
+      },
+      nextValue
+    );
   }
 };
-
-/**
- * Recoil Value setter
- */
-const setRecoilValue = <T>(
-  recoilId: string,
-  recoilValue: RecoilValue<T>,
-  nextValue: T
-) => coreSetRecoilValue(recoilId, recoilValue, nextValue);
 
 // --------------------------------------------------
 // REGISTRATION AND SUBCRIPTIONS
