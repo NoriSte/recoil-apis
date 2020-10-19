@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
+
 import {
   Atom,
   isAtom,
@@ -15,7 +17,6 @@ import {
  * Get the current Recoil Atom' value
  */
 const coreGetAtomValue = <T>(recoilId: string, atom: Atom<T>): T => {
-  registerRecoilValue(recoilId, atom);
   const coreRecoilValue = getRecoilStore(recoilId)[atom.key];
 
   // TS-related error, it can't happen at runtime
@@ -64,6 +65,7 @@ export const createPublicSetAtomValue = <T>(
   recoilId: string,
   recoilValue: RecoilValue<T>
 ) => (nextValue: T) => coreSetAtomValue(recoilId, recoilValue, nextValue);
+
 /**
  * Set the Recoil Atom and notify the subscribers without passing the recoil id
  */
@@ -92,6 +94,7 @@ export const createPublicSetRecoilValue = <T>(recoilId: string) => (
   recoilValue: RecoilValue<T>,
   nextValue: T
 ) => coreSetRecoilValue(recoilId, recoilValue, nextValue);
+
 /**
  * Provide a Recoil Value setter
  * @private
@@ -119,7 +122,7 @@ const coreSetRecoilValue = <T>(
 // --------------------------------------------------
 
 /**
- * Register a new Recoil Value, it's idempotent.
+ * Register a new Recoil Value idempotently.
  * @private
  */
 export const registerRecoilValue = <T>(

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-use-before-define */
+
 import { Atom, isAtom, Selector, RecoilValue } from "./typings";
 import { useReducer, useEffect, useContext } from "react";
 import { RecoilContext } from "./RecoilRoot";
@@ -48,11 +50,6 @@ export const useRecoilValue = <T>(recoilValue: RecoilValue<T>) => {
 export const useRecoilState = <T>(recoilValue: RecoilValue<T>) => {
   const recoilId = useRecoilId();
   const currentValue = useRecoilValue(recoilValue);
-
-  // registering a Recoil value requires the recoil id (stored in a React Context),
-  // That's why it can't be registered outside a component/hook code. `registerRecoilValue`
-  // must be idempotent
-  registerRecoilValue(recoilId, recoilValue);
 
   if (isAtom(recoilValue)) {
     const setter = createPublicSetAtomValue(recoilId, recoilValue);

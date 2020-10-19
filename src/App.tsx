@@ -39,7 +39,7 @@ const textState1 = atom({
   key: "textState1",
   default: ""
 });
-const textState2 = atom<string>({
+const textState2 = atom({
   key: "textState2",
   default: ""
 });
@@ -107,12 +107,12 @@ const charCountStateByTwo = selector({
   }
 });
 
-const bothTextsState = selector<string>({
+const bothTextsState = selector({
   key: "bothTextsState",
   get: ({ get }) => {
     return `${get(textState1)}-${get(textState2)}`;
   },
-  set: ({ get, set }, nextValue) => {
+  set: ({ get, set }, nextValue: string) => {
     if (!nextValue.includes("-")) return;
     const strings = nextValue.split("-");
     if (strings.length !== 2) return;
