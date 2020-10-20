@@ -1,11 +1,13 @@
 import { FC } from "react";
-import { Atom } from "./recoil";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+
+import { Atom } from "./recoil";
 import { useRecoilState, RecoilRoot } from "./recoil";
+
 import App from "./App";
 
 describe("Smoke tests", () => {
